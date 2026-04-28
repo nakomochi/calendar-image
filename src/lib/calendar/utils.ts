@@ -1,0 +1,170 @@
+import type { CalendarEvent } from '../types';
+
+export function getMonthDays(year: number, month: number): Date[] {
+  const first = new Date(year, month, 1);
+  const startDay = first.getDay();
+  const days: Date[] = [];
+
+  // Fill leading days from previous month
+  for (let i = startDay; i > 0; i--) {
+    days.push(new Date(year, month, 1 - i));
+  }
+
+  // Days of current month
+  const lastDate = new Date(year, month + 1, 0).getDate();
+  for (let d = 1; d <= lastDate; d++) {
+    days.push(new Date(year, month, d));
+  }
+
+  // Fill trailing days to complete 6 rows
+  while (days.length < 42) {
+    const last = days[days.length - 1];
+    days.push(new Date(last.getFullYear(), last.getMonth(), last.getDate() + 1));
+  }
+
+  return days;
+}
+
+export function getWeekDays(date: Date): Date[] {
+  const day = date.getDay();
+  const start = new Date(date);
+  start.setDate(start.getDate() - day);
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+}
+
+export function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+export function getEventsForDay(events: CalendarEvent[], date: Date): CalendarEvent[] {
+  return events.filter((e) => {
+    const start = new Date(e.start);
+    const end = new Date(e.end);
+    const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+    return start < dayEnd && end > dayStart;
+  });
+}
+
+export function getEventsForWeek(events: CalendarEvent[], weekStart: Date): CalendarEvent[] {
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+  return events.filter((e) => {
+    const start = new Date(e.start);
+    const end = new Date(e.end);
+    return start < weekEnd && end > weekStart;
+  });
+}
+
+export function formatTime(date: Date): string {
+  return date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+}
+
+export function formatDate(date: Date): string {
+  return date.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' });
+}
+
+export function formatMonthYear(date: Date): string {
+  return date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
+}
+
+const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
+
+export function getWeekdayLabel(index: number): string {
+  return WEEKDAY_LABELS[index];
+}
+
+export function getHourLabels(): string[] {
+  return Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
+}
+
+export interface LayoutedEvent {
+  event: CalendarEvent;
+  column: number;
+  totalColumns: number;
+}
+
+function eventsOverlap(a: CalendarEvent, b: CalendarEvent): boolean {
+  const aStart = new Date(a.start).getTime();
+  const aEnd = new Date(a.end).getTime();
+  const bStart = new Date(b.start).getTime();
+  const bEnd = new Date(b.end).getTime();
+  return aStart < bEnd && bStart < aEnd;
+}
+
+export function layoutEvents(events: CalendarEvent[]): LayoutedEvent[] {
+  if (events.length === 0) return [];
+
+  const sorted = [...events].sort(
+    (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+  );
+
+  // Build overlap groups using union-find approach
+  const groupMap = new Map<string, number>();
+  const groups: CalendarEvent[][] = [];
+
+  for (const ev of sorted) {
+    let assignedGroup = -1;
+    for (let g = 0; g < groups.length; g++) {
+      if (groups[g].some((other) => eventsOverlap(ev, other))) {
+        if (assignedGroup === -1) {
+          assignedGroup = g;
+          groups[g].push(ev);
+        } else {
+          // Merge groups
+          groups[assignedGroup].push(...groups[g]);
+          groups.splice(g, 1);
+          g--;
+        }
+      }
+    }
+    if (assignedGroup === -1) {
+      groups.push([ev]);
+    }
+  }
+
+  const result: LayoutedEvent[] = [];
+
+  for (const group of groups) {
+    group.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+    // Assign columns greedily
+    const columns: CalendarEvent[][] = [];
+    for (const ev of group) {
+      let placed = false;
+      for (let c = 0; c < columns.length; c++) {
+        const lastInCol = columns[c][columns[c].length - 1];
+        if (!eventsOverlap(ev, lastInCol)) {
+          columns[c].push(ev);
+          groupMap.set(ev.id, c);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        groupMap.set(ev.id, columns.length);
+        columns.push([ev]);
+      }
+    }
+
+    const totalColumns = columns.length;
+    for (const ev of group) {
+      result.push({
+        event: ev,
+        column: groupMap.get(ev.id)!,
+        totalColumns,
+      });
+    }
+  }
+
+  return result;
+}
