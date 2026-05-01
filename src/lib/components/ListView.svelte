@@ -1,17 +1,28 @@
 <script lang="ts">
-  import { formatTime, formatDate } from '$lib/calendar/utils';
-  import type { CalendarEvent, CalendarStyle } from '$lib/types';
+  import { formatTime, formatDate, parseViewRange } from '$lib/calendar/utils';
+  import type { CalendarEvent, CalendarStyle, ViewRange } from '$lib/types';
 
   interface Props {
     events: CalendarEvent[];
     style: CalendarStyle;
+    range: ViewRange;
     oneditEvent: (event: CalendarEvent) => void;
   }
 
-  let { events, style, oneditEvent }: Props = $props();
+  let { events, style, range, oneditEvent }: Props = $props();
+
+  let filteredEvents = $derived.by(() => {
+    const { start, end } = parseViewRange(range);
+    if (!start || !end) return events;
+    return events.filter((e) => {
+      const evStart = new Date(e.start);
+      const evEnd = new Date(e.end);
+      return evStart < end && evEnd > start;
+    });
+  });
 
   let sortedEvents = $derived(
-    [...events].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+    [...filteredEvents].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
   );
 
   interface GroupedEntry {

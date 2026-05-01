@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { events, style, viewType, currentDate, exportSettings } from '$lib/stores';
+  import { events, style, viewType, exportSettings, viewRange } from '$lib/stores';
   import { visibleEvents } from '$lib/stores';
-  import MonthView from '$lib/components/MonthView.svelte';
-  import WeekView from '$lib/components/WeekView.svelte';
-  import DayView from '$lib/components/DayView.svelte';
+  import GridView from '$lib/components/GridView.svelte';
+  import TimelineView from '$lib/components/TimelineView.svelte';
   import ListView from '$lib/components/ListView.svelte';
   import EventEditModal from '$lib/components/EventEditModal.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
@@ -44,32 +43,25 @@
       style="width: {$exportSettings.width}px; height: {$exportSettings.height}px;"
       class="shadow-lg shrink-0"
     >
-      {#if $viewType === 'month'}
-        <MonthView
-          year={$currentDate.getFullYear()}
-          month={$currentDate.getMonth()}
+      {#if $viewType === 'grid'}
+        <GridView
           events={$visibleEvents}
           style={$style}
+          range={$viewRange}
           oneditEvent={handleEditEvent}
         />
-      {:else if $viewType === 'week'}
-        <WeekView
-          date={$currentDate}
+      {:else if $viewType === 'timeline'}
+        <TimelineView
           events={$visibleEvents}
           style={$style}
-          oneditEvent={handleEditEvent}
-        />
-      {:else if $viewType === 'day'}
-        <DayView
-          date={$currentDate}
-          events={$visibleEvents}
-          style={$style}
+          range={$viewRange}
           oneditEvent={handleEditEvent}
         />
       {:else}
         <ListView
           events={$visibleEvents}
           style={$style}
+          range={$viewRange}
           oneditEvent={handleEditEvent}
         />
       {/if}

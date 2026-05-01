@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { style, viewType, exportSettings, currentDate, events } from '$lib/stores';
+  import { style, viewType, exportSettings, events, viewRange } from '$lib/stores';
   import { exportToImage } from '$lib/export/image';
   import { parseICS, fetchICS } from '$lib/ical/parser';
-  import { formatMonthYear } from '$lib/calendar/utils';
-  import type { ViewType, EventSizing, EventAlign } from '$lib/types';
+  import type { ViewType } from '$lib/types';
 
   interface Props {
     calendarEl: HTMLElement | null;
@@ -16,9 +15,8 @@
   let error = $state('');
 
   const viewOptions: { value: ViewType; label: string }[] = [
-    { value: 'month', label: '月' },
-    { value: 'week', label: '週' },
-    { value: 'day', label: '日' },
+    { value: 'grid', label: 'グリッド' },
+    { value: 'timeline', label: 'タイムライン' },
     { value: 'list', label: 'リスト' },
   ];
 
@@ -67,20 +65,6 @@
     reader.readAsText(file);
   }
 
-  function navigate(delta: number) {
-    currentDate.update((d) => {
-      const next = new Date(d);
-      if ($viewType === 'month') {
-        next.setMonth(next.getMonth() + delta);
-      } else if ($viewType === 'week') {
-        next.setDate(next.getDate() + delta * 7);
-      } else {
-        next.setDate(next.getDate() + delta);
-      }
-      return next;
-    });
-  }
-
   async function handleExport() {
     if (!calendarEl) return;
     try {
@@ -91,7 +75,7 @@
   }
 </script>
 
-<aside class="w-72 bg-base-200 p-4 flex flex-col gap-4 overflow-y-auto shrink-0">
+<aside class="w-90 bg-base-200 p-4 flex flex-col gap-4 overflow-y-auto shrink-0">
   <!-- Import -->
   <div class="space-y-2">
     <h3 class="font-bold text-sm">インポート</h3>
@@ -118,13 +102,6 @@
     {/if}
   </div>
 
-  <!-- Navigation -->
-  <div class="flex items-center justify-between">
-    <button class="btn btn-ghost btn-sm" onclick={() => navigate(-1)}>◀</button>
-    <span class="text-sm font-medium">{formatMonthYear($currentDate)}</span>
-    <button class="btn btn-ghost btn-sm" onclick={() => navigate(1)}>▶</button>
-  </div>
-
   <!-- View Type -->
   <div class="space-y-1">
     <h3 class="font-bold text-sm">表示</h3>
@@ -132,13 +109,40 @@
       {#each viewOptions as opt}
         <button
           class="join-item btn btn-sm flex-1"
-          class:btn-active={$viewType === opt.value}
+          class:btn-primary={$viewType === opt.value}
           onclick={() => viewType.set(opt.value)}
         >
           {opt.label}
         </button>
       {/each}
     </div>
+  </div>
+
+  <!-- Range -->
+  <div class="space-y-2">
+    <h3 class="font-bold text-sm">表示範囲</h3>
+    <label class="flex items-center justify-between text-xs">
+      <span>開始日</span>
+      <input type="date" class="input input-bordered input-xs w-36" bind:value={$viewRange.start} />
+    </label>
+    <label class="flex items-center justify-between text-xs">
+      <span>終了日</span>
+      <input type="date" class="input input-bordered input-xs w-36" bind:value={$viewRange.end} />
+    </label>
+    <label class="flex items-center gap-2 text-xs">
+      <input type="checkbox" class="checkbox checkbox-xs" bind:checked={$viewRange.grayout} />
+      <span>範囲外をグレーアウト表示</span>
+    </label>
+    {#if $viewType === 'timeline'}
+      <label class="flex items-center justify-between text-xs">
+        <span>開始時刻</span>
+        <input type="time" class="input input-bordered input-xs w-28" bind:value={$viewRange.startTime} />
+      </label>
+      <label class="flex items-center justify-between text-xs">
+        <span>終了時刻</span>
+        <input type="time" class="input input-bordered input-xs w-28" bind:value={$viewRange.endTime} />
+      </label>
+    {/if}
   </div>
 
   <!-- Style -->

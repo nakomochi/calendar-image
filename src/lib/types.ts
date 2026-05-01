@@ -10,7 +10,7 @@ export interface CalendarEvent {
   color: string;
 }
 
-export type ViewType = 'month' | 'week' | 'day' | 'list';
+export type ViewType = 'grid' | 'timeline' | 'list';
 
 export type EventSizing = 'equal' | 'fixed';
 export type EventAlign = 'start' | 'center';
@@ -29,6 +29,22 @@ export interface CalendarStyle {
   eventFixedSize: number;
   eventAlign: EventAlign;
 }
+
+export interface ViewRange {
+  start: string; // 'YYYY-MM-DD'
+  end: string;
+  grayout: boolean;
+  startTime: string; // 'HH:mm' (timeline only)
+  endTime: string;
+}
+
+export const DEFAULT_VIEW_RANGE: ViewRange = {
+  start: '',
+  end: '',
+  grayout: false,
+  startTime: '00:00',
+  endTime: '24:00',
+};
 
 export interface ExportSettings {
   format: 'png' | 'jpg';
