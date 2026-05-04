@@ -11,6 +11,8 @@
 
   let { events, style, range, oneditEvent }: Props = $props();
 
+  let subFontSize = $derived(Math.max(style.eventFontSize - 2, 8));
+
   let filteredEvents = $derived.by(() => {
     const { start, end } = parseViewRange(range);
     if (!start || !end) return events;
@@ -61,8 +63,8 @@
   {#each grouped as group}
     <div class="mb-4">
       <div
-        class="text-sm font-bold px-3 py-2 rounded-t"
-        style="background-color: {style.headerBgColor}; color: {style.headerTextColor};"
+        class="font-bold px-3 py-2 rounded-t"
+        style="background-color: {style.headerBgColor}; color: {style.headerTextColor}; font-size: {style.dateFontSize}px;"
       >
         {group.label}
       </div>
@@ -76,17 +78,17 @@
             class="w-2 h-2 rounded-full mt-1.5 shrink-0"
             style="background-color: {ev.color || style.eventDefaultColor};"
           ></div>
-          <div class="min-w-0">
-            <div class="text-sm font-medium truncate">{ev.title}</div>
+          <div class="min-w-0" style="font-size: {style.eventFontSize}px;">
+            <div class="font-medium truncate">{ev.title}</div>
             {#if !ev.allDay}
-              <div class="text-xs text-gray-400">
+              <div class="text-gray-400" style="font-size: {subFontSize}px;">
                 {formatTime(new Date(ev.start))} - {formatTime(new Date(ev.end))}
               </div>
             {:else}
-              <div class="text-xs text-gray-400">終日</div>
+              <div class="text-gray-400" style="font-size: {subFontSize}px;">終日</div>
             {/if}
             {#if ev.location}
-              <div class="text-xs text-gray-400">{ev.location}</div>
+              <div class="text-gray-400" style="font-size: {subFontSize}px;">{ev.location}</div>
             {/if}
           </div>
         </button>

@@ -11,3 +11,7 @@ export const exportSettings = writable<ExportSettings>({ ...DEFAULT_EXPORT });
 export const visibleEvents = derived(events, ($events) =>
   $events.filter((e) => e.visible)
 );
+
+export const hiddenEvents = derived(events, ($events) =>
+  $events.filter((e) => !e.visible)
+);

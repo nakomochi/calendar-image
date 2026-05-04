@@ -6,11 +6,10 @@
     event: CalendarEvent | null;
     onclose: () => void;
     onsave: (event: CalendarEvent) => void;
-    ondelete: (id: string) => void;
     ontoggleVisibility: (id: string) => void;
   }
 
-  let { event, onclose, onsave, ondelete, ontoggleVisibility }: Props = $props();
+  let { event, onclose, onsave, ontoggleVisibility }: Props = $props();
 
   let editTitle = $state('');
   let editDescription = $state('');
@@ -83,10 +82,7 @@
       </div>
 
       <div class="flex justify-between mt-6">
-        <div class="flex gap-2">
-          <button class="btn btn-error btn-sm" onclick={() => { ondelete(event!.id); onclose(); }}>
-            削除
-          </button>
+        <div>
           <button class="btn btn-warning btn-sm" onclick={() => { ontoggleVisibility(event!.id); onclose(); }}>
             {event.visible ? '非表示' : '表示'}
           </button>

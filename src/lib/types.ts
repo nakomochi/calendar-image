@@ -28,6 +28,8 @@ export interface CalendarStyle {
   eventSizing: EventSizing;
   eventFixedSize: number;
   eventAlign: EventAlign;
+  dateFontSize: number;
+  eventFontSize: number;
 }
 
 export interface ViewRange {
@@ -65,6 +67,8 @@ export const DEFAULT_STYLE: CalendarStyle = {
   eventSizing: 'equal',
   eventFixedSize: 20,
   eventAlign: 'start',
+  dateFontSize: 12,
+  eventFontSize: 10,
 };
 
 export const DEFAULT_EXPORT: ExportSettings = {

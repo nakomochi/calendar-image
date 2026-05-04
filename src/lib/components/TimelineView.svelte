@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getWeekdayLabel, getEventsForDay, formatTime, isSameDay, layoutEvents, isDayInRange, getTimeRangeHours, getRangeDays, getWeekDays, hasValidRange } from '$lib/calendar/utils';
+  import { getWeekdayLabel, getEventsForDay, formatTime, formatDayLabel, isSameDay, layoutEvents, isDayInRange, getTimeRangeHours, getRangeDays, getWeekDays, hasValidRange } from '$lib/calendar/utils';
   import type { CalendarEvent, CalendarStyle, ViewRange } from '$lib/types';
 
   interface Props {
@@ -58,7 +58,7 @@
           {i === days.length - 1 ? `border-top-right-radius: ${style.borderRadius}px` : ''}"
       >
         <div>{getWeekdayLabel(day.getDay())}</div>
-        <div class="text-lg" class:underline={isSameDay(day, today)}>{day.getDate()}</div>
+        <div style="font-size: {style.dateFontSize}px;" class:underline={isSameDay(day, today)}>{formatDayLabel(day, i === 0)}</div>
       </div>
     {/each}
   </div>
@@ -79,8 +79,8 @@
         >
           {#each allDayEvents as ev}
             <button
-              class="text-left text-[10px] px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80"
-              style="background-color: {ev.color || style.eventDefaultColor}; color: white;
+              class="text-left px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80"
+              style="font-size: {style.eventFontSize}px; background-color: {ev.color || style.eventDefaultColor}; color: white;
                 {style.eventSizing === 'equal'
                   ? 'width: 100%; flex: 1 1 0%;'
                   : `width: 100%; height: ${style.eventFixedSize}px; flex: none;`}"
@@ -131,8 +131,8 @@
           {@const top = getEventTop(ev)}
           {@const height = getEventHeight(ev)}
           <button
-            class="absolute text-[9px] leading-tight px-1 rounded cursor-pointer hover:opacity-80 z-10 overflow-hidden text-left"
-            style="background-color: {ev.color || style.eventDefaultColor}; color: white;
+            class="absolute leading-tight px-1 rounded cursor-pointer hover:opacity-80 z-10 overflow-hidden text-left"
+            style="font-size: {style.eventFontSize}px; background-color: {ev.color || style.eventDefaultColor}; color: white;
               top: {top}px; height: {height}px;
               left: {(column / totalColumns) * 100}%; width: {100 / totalColumns}%;"
             onclick={() => oneditEvent(ev)}

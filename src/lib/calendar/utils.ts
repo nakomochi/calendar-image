@@ -77,6 +77,14 @@ export function formatMonthYear(date: Date): string {
   return date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
 }
 
+// Format day label: "M/D" for 1st of month or first visible cell, "D" otherwise
+export function formatDayLabel(day: Date, isFirstCell: boolean): string {
+  if (day.getDate() === 1 || isFirstCell) {
+    return `${day.getMonth() + 1}/${day.getDate()}`;
+  }
+  return `${day.getDate()}`;
+}
+
 const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
 
 export function getWeekdayLabel(index: number): string {

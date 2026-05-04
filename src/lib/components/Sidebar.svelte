@@ -1,14 +1,19 @@
 <script lang="ts">
-  import { style, viewType, exportSettings, events, viewRange } from '$lib/stores';
+  import { style, viewType, exportSettings, events, viewRange, hiddenEvents } from '$lib/stores';
   import { exportToImage } from '$lib/export/image';
   import { parseICS, fetchICS } from '$lib/ical/parser';
+  import { formatDate } from '$lib/calendar/utils';
   import type { ViewType } from '$lib/types';
+
+  let hiddenOpen = $state(false);
 
   interface Props {
     calendarEl: HTMLElement | null;
+    onclickDay: (date: Date) => void;
+    onrestoreEvent: (id: string) => void;
   }
 
-  let { calendarEl }: Props = $props();
+  let { calendarEl, onclickDay, onrestoreEvent }: Props = $props();
 
   let icsUrl = $state('');
   let loading = $state(false);
@@ -181,6 +186,14 @@
       <span>角丸</span>
       <input type="range" class="range range-xs range-primary w-24" min="0" max="24" bind:value={$style.borderRadius} />
     </label>
+    <label class="flex items-center justify-between text-xs">
+      <span>日付文字サイズ</span>
+      <input type="number" class="input input-bordered input-xs w-20" min="6" max="48" bind:value={$style.dateFontSize} />
+    </label>
+    <label class="flex items-center justify-between text-xs">
+      <span>予定文字サイズ</span>
+      <input type="number" class="input input-bordered input-xs w-20" min="6" max="48" bind:value={$style.eventFontSize} />
+    </label>
   </div>
 
   <!-- Event Block -->
@@ -207,6 +220,42 @@
       </select>
     </label>
   </div>
+
+  <!-- Hidden Events -->
+  {#if $hiddenEvents.length > 0}
+    <div class="space-y-2">
+      <button class="flex items-center gap-1 font-bold text-sm w-full text-left cursor-pointer" onclick={() => hiddenOpen = !hiddenOpen}>
+        <span class="text-xs">{hiddenOpen ? '▼' : '▶'}</span>
+        <span>非表示の予定 ({$hiddenEvents.length})</span>
+      </button>
+      {#if hiddenOpen}
+        <div class="space-y-1 max-h-48 overflow-y-auto">
+          {#each $hiddenEvents as ev}
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div
+              class="flex items-center gap-2 text-xs bg-base-100 rounded px-2 py-1.5 w-full text-left cursor-pointer hover:bg-base-300"
+              onclick={() => onclickDay(new Date(ev.start))}
+              onkeydown={() => {}}
+              role="button"
+              tabindex="0"
+            >
+              <div class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: {ev.color || $style.eventDefaultColor};"></div>
+              <div class="min-w-0 flex-1">
+                <div class="truncate">{ev.title}</div>
+                <div class="text-[10px] text-gray-400">{formatDate(new Date(ev.start))}</div>
+              </div>
+              <button
+                class="btn btn-ghost btn-xs px-1 shrink-0"
+                onclick={(e) => { e.stopPropagation(); onrestoreEvent(ev.id); }}
+              >
+                表示
+              </button>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/if}
 
   <!-- Export -->
   <div class="space-y-2">

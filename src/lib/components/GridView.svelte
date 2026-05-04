@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getWeekdayLabel, isSameDay, getEventsForDay, formatTime, getRangeGridDays, isDayInRange, getCurrentMonthGrid, hasValidRange } from '$lib/calendar/utils';
+  import { getWeekdayLabel, isSameDay, getEventsForDay, formatTime, formatDayLabel, getRangeGridDays, isDayInRange, getCurrentMonthGrid, hasValidRange } from '$lib/calendar/utils';
   import type { CalendarEvent, CalendarStyle, ViewRange } from '$lib/types';
 
   interface Props {
@@ -7,9 +7,10 @@
     style: CalendarStyle;
     range: ViewRange;
     oneditEvent: (event: CalendarEvent) => void;
+    onclickDay: (date: Date) => void;
   }
 
-  let { events, style, range, oneditEvent }: Props = $props();
+  let { events, style, range, oneditEvent, onclickDay }: Props = $props();
 
   let days = $derived(
     hasValidRange(range)
@@ -35,19 +36,21 @@
     </div>
   {/each}
 
-  {#each days as day}
+  {#each days as day, idx}
     {@const inRange = isDayInRange(day, range)}
     {@const outOfRange = hasValidRange(range) && !inRange}
     {@const showGrayout = outOfRange && range.grayout}
     {@const isToday = isSameDay(day, today)}
     {@const dayEvents = outOfRange && !showGrayout ? [] : getEventsForDay(events, day)}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="border overflow-hidden flex flex-col"
+      class="border overflow-hidden flex flex-col cursor-pointer"
       style="border-color: {style.gridLineColor};
         background-color: {showGrayout ? '#f3f4f6' : isToday ? style.todayBgColor : style.bgColor};
         opacity: {outOfRange ? 0.3 : 1};"
+      onclick={() => onclickDay(day)}
     >
-      <div class="text-xs font-medium px-1 pt-0.5 shrink-0">{day.getDate()}</div>
+      <div class="font-medium px-1 pt-0.5 shrink-0" style="font-size: {style.dateFontSize}px;">{formatDayLabel(day, idx === 0)}</div>
       {#if !outOfRange || showGrayout}
         <div
           class="flex-1 flex flex-col px-0.5 pb-0.5 min-h-0"
@@ -55,12 +58,12 @@
         >
           {#each dayEvents as ev}
             <button
-              class="text-[10px] leading-tight px-0.5 rounded truncate cursor-pointer hover:opacity-80 w-full overflow-hidden text-left shrink-0"
-              style="background-color: {ev.color || style.eventDefaultColor}; color: white;
+              class="leading-tight px-0.5 rounded truncate cursor-pointer hover:opacity-80 w-full overflow-hidden text-left shrink-0"
+              style="font-size: {style.eventFontSize}px; background-color: {ev.color || style.eventDefaultColor}; color: white;
                 {style.eventSizing === 'equal'
                   ? 'flex: 1 1 0%; shrink: 1;'
                   : `flex: none; height: ${style.eventFixedSize}px;`}"
-              onclick={() => oneditEvent(ev)}
+              onclick={(e) => { e.stopPropagation(); oneditEvent(ev); }}
             >
               {#if !ev.allDay}
                 <span class="font-medium">{formatTime(new Date(ev.start))}</span>
