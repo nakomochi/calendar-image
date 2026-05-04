@@ -23,6 +23,7 @@ export interface CalendarStyle {
   eventDefaultColor: string;
   gridLineColor: string;
   todayBgColor: string;
+  highlightToday: boolean;
   fontFamily: string;
   borderRadius: number;
   eventSizing: EventSizing;
@@ -62,6 +63,7 @@ export const DEFAULT_STYLE: CalendarStyle = {
   eventDefaultColor: '#3b82f6',
   gridLineColor: '#e5e7eb',
   todayBgColor: '#eff6ff',
+  highlightToday: true,
   fontFamily: "'Noto Sans JP', sans-serif",
   borderRadius: 8,
   eventSizing: 'equal',

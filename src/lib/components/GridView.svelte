@@ -41,7 +41,7 @@
     {@const inRange = isDayInRange(day, range)}
     {@const outOfRange = hasValidRange(range) && !inRange}
     {@const showGrayout = outOfRange && range.grayout}
-    {@const isToday = isSameDay(day, today)}
+    {@const isToday = style.highlightToday && isSameDay(day, today)}
     {@const dayEvents = outOfRange && !showGrayout ? [] : getEventsForDay(events, day)}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div

@@ -52,6 +52,7 @@
     {#each days as day, i}
       {@const inRange = isDayInRange(day, range)}
       {@const outOfRange = hasValidRange(range) && !inRange}
+      {@const isToday = style.highlightToday && isSameDay(day, today)}
       <div
         class="flex-1 text-center text-xs font-bold py-2"
         style="background-color: {style.headerBgColor}; color: {style.headerTextColor};
@@ -59,7 +60,7 @@
           {i === days.length - 1 ? `border-top-right-radius: ${style.borderRadius}px` : ''}"
       >
         <div>{getWeekdayLabel(day.getDay())}</div>
-        <div style="font-size: {style.dateFontSize}px;" class:underline={isSameDay(day, today)}>{formatDayLabel(day, i === 0)}</div>
+        <div style="font-size: {style.dateFontSize}px;" class:underline={isToday}>{formatDayLabel(day, i === 0)}</div>
       </div>
     {/each}
   </div>
@@ -117,12 +118,13 @@
       {@const inRange = isDayInRange(day, range)}
       {@const outOfRange = hasValidRange(range) && !inRange}
       {@const showGrayout = outOfRange && range.grayout}
+      {@const isToday = style.highlightToday && isSameDay(day, today)}
       {@const timedEvents = outOfRange && !showGrayout ? [] : getEventsForDay(events, day).filter((e) => !e.allDay)}
       {@const layouted = layoutEvents(timedEvents)}
       <div
         class="flex-1 relative border-l"
         style="height: {totalHeight}px; border-color: {style.gridLineColor};
-          background-color: {showGrayout ? '#f3f4f6' : isSameDay(day, today) ? style.todayBgColor : 'transparent'};
+          background-color: {showGrayout ? '#f3f4f6' : isToday ? style.todayBgColor : 'transparent'};
           opacity: {outOfRange ? 0.3 : 1};"
       >
         <!-- Hour lines -->
