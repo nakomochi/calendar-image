@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { events, style, viewType, exportSettings, viewRange } from '$lib/stores';
+  import { events, style, viewType, exportSettings, viewRange, eventDisplay } from '$lib/stores';
   import { visibleEvents } from '$lib/stores';
   import { getEventsForDay } from '$lib/calendar/utils';
   import GridView from '$lib/components/GridView.svelte';
@@ -61,6 +61,7 @@
           events={$visibleEvents}
           style={$style}
           range={$viewRange}
+          displayConfig={$eventDisplay}
           oneditEvent={handleEditEvent}
           onclickDay={handleClickDay}
         />
@@ -69,6 +70,7 @@
           events={$visibleEvents}
           style={$style}
           range={$viewRange}
+          displayConfig={$eventDisplay}
           oneditEvent={handleEditEvent}
         />
       {:else}
@@ -76,6 +78,7 @@
           events={$visibleEvents}
           style={$style}
           range={$viewRange}
+          displayConfig={$eventDisplay}
           oneditEvent={handleEditEvent}
         />
       {/if}

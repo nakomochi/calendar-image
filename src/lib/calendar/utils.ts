@@ -1,4 +1,4 @@
-import type { CalendarEvent, ViewRange } from '../types';
+import type { CalendarEvent, EventDisplayConfig, EventField, ViewRange } from '../types';
 
 export function getMonthDays(year: number, month: number): Date[] {
   const first = new Date(year, month, 1);
@@ -250,5 +250,69 @@ export function layoutEvents(events: CalendarEvent[]): LayoutedEvent[] {
     }
   }
 
+  return result;
+}
+
+export interface EventRow {
+  text: string;
+  hasTitle: boolean;
+  fontSize?: number;
+  bold: boolean;
+}
+
+function resolveField(ev: CalendarEvent, field: EventField, allDayMode: 'label' | 'omit'): string {
+  if (ev.allDay) {
+    if (allDayMode === 'omit') {
+      if (field === 'startTime' || field === 'endTime' || field === 'allDayLabel') return '';
+    } else {
+      if (field === 'startTime' || field === 'endTime') return '';
+      if (field === 'allDayLabel') return '終日';
+    }
+  } else {
+    if (field === 'allDayLabel') return '';
+  }
+
+  switch (field) {
+    case 'startTime':
+      return formatTime(new Date(ev.start));
+    case 'endTime':
+      return formatTime(new Date(ev.end));
+    case 'title':
+      return ev.title;
+    case 'location':
+      return ev.location;
+  }
+}
+
+export function buildEventRows(ev: CalendarEvent, config: EventDisplayConfig): EventRow[] {
+  const result: EventRow[] = [];
+  for (const row of config.rows) {
+    let text = '';
+    let hasTitle = false;
+    let hasField = false;
+    let anyFieldRendered = false;
+    for (const item of row.items) {
+      if (item.type === 'field') {
+        hasField = true;
+        const v = resolveField(ev, item.field, config.allDayMode);
+        if (v) {
+          anyFieldRendered = true;
+          if (item.field === 'title') hasTitle = true;
+        }
+        text += v;
+      } else {
+        text += item.text;
+      }
+    }
+    text = text.trim();
+    if (!text) continue;
+    if (hasField && !anyFieldRendered) continue;
+    result.push({
+      text,
+      hasTitle,
+      fontSize: row.fontSize,
+      bold: row.bold ?? hasTitle,
+    });
+  }
   return result;
 }

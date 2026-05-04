@@ -1,15 +1,16 @@
 <script lang="ts">
-  import { getWeekdayLabel, getEventsForDay, formatTime, formatDayLabel, isSameDay, layoutEvents, isDayInRange, getTimeRangeHours, getRangeDays, getWeekDays, hasValidRange } from '$lib/calendar/utils';
-  import type { CalendarEvent, CalendarStyle, ViewRange } from '$lib/types';
+  import { getWeekdayLabel, getEventsForDay, formatDayLabel, isSameDay, layoutEvents, isDayInRange, getTimeRangeHours, getRangeDays, getWeekDays, hasValidRange, buildEventRows } from '$lib/calendar/utils';
+  import type { CalendarEvent, CalendarStyle, EventDisplayConfig, ViewRange } from '$lib/types';
 
   interface Props {
     events: CalendarEvent[];
     style: CalendarStyle;
     range: ViewRange;
+    displayConfig: EventDisplayConfig;
     oneditEvent: (event: CalendarEvent) => void;
   }
 
-  let { events, style, range, oneditEvent }: Props = $props();
+  let { events, style, range, displayConfig, oneditEvent }: Props = $props();
 
   let days = $derived(
     hasValidRange(range)
@@ -86,7 +87,13 @@
                   : `width: 100%; height: ${style.eventFixedSize}px; flex: none;`}"
               onclick={() => oneditEvent(ev)}
             >
-              {ev.title}
+              {#each buildEventRows(ev, displayConfig) as row}
+                <div
+                  class="truncate whitespace-pre"
+                  class:font-bold={row.bold}
+                  style={row.fontSize !== undefined ? `font-size: ${row.fontSize}px;` : ''}
+                >{row.text}</div>
+              {/each}
             </button>
           {/each}
         </div>
@@ -137,7 +144,13 @@
               left: {(column / totalColumns) * 100}%; width: {100 / totalColumns}%;"
             onclick={() => oneditEvent(ev)}
           >
-            {formatTime(new Date(ev.start))} {ev.title}
+            {#each buildEventRows(ev, displayConfig) as row}
+              <div
+                class="truncate whitespace-pre"
+                class:font-bold={row.bold}
+                style={row.fontSize !== undefined ? `font-size: ${row.fontSize}px;` : ''}
+              >{row.text}</div>
+            {/each}
           </button>
         {/each}
       </div>

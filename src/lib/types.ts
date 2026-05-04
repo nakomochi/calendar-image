@@ -76,3 +76,47 @@ export const DEFAULT_EXPORT: ExportSettings = {
   width: 1200,
   height: 900,
 };
+
+export type EventField = 'startTime' | 'endTime' | 'title' | 'location' | 'allDayLabel';
+
+export type RowItem =
+  | { type: 'field'; field: EventField }
+  | { type: 'text'; text: string };
+
+export interface RowConfig {
+  items: RowItem[];
+  fontSize?: number;
+  bold?: boolean;
+}
+
+export interface EventDisplayConfig {
+  rows: RowConfig[];
+  hidden: EventField[];
+  allDayMode: 'label' | 'omit';
+}
+
+export const DEFAULT_EVENT_DISPLAY: EventDisplayConfig = {
+  rows: [
+    {
+      items: [
+        { type: 'field', field: 'startTime' },
+        { type: 'text', text: ' ' },
+        { type: 'field', field: 'title' },
+      ],
+      bold: true,
+    },
+    {
+      items: [{ type: 'field', field: 'location' }],
+    },
+  ],
+  hidden: ['endTime', 'allDayLabel'],
+  allDayMode: 'label',
+};
+
+export const EVENT_FIELD_LABELS: Record<EventField, string> = {
+  startTime: '開始時刻',
+  endTime: '終了時刻',
+  title: 'タイトル',
+  location: '場所',
+  allDayLabel: '終日ラベル',
+};

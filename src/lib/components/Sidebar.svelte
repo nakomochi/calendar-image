@@ -4,6 +4,7 @@
   import { parseICS, fetchICS } from '$lib/ical/parser';
   import { formatDate } from '$lib/calendar/utils';
   import type { ViewType } from '$lib/types';
+  import EventDisplayEditor from './EventDisplayEditor.svelte';
 
   let hiddenOpen = $state(false);
 
@@ -195,6 +196,9 @@
       <input type="number" class="input input-bordered input-xs w-20" min="6" max="48" bind:value={$style.eventFontSize} />
     </label>
   </div>
+
+  <!-- Event Display -->
+  <EventDisplayEditor />
 
   <!-- Event Block -->
   <div class="space-y-2">

@@ -1,15 +1,16 @@
 <script lang="ts">
-  import { formatTime, formatDate, parseViewRange } from '$lib/calendar/utils';
-  import type { CalendarEvent, CalendarStyle, ViewRange } from '$lib/types';
+  import { formatDate, parseViewRange, buildEventRows } from '$lib/calendar/utils';
+  import type { CalendarEvent, CalendarStyle, EventDisplayConfig, ViewRange } from '$lib/types';
 
   interface Props {
     events: CalendarEvent[];
     style: CalendarStyle;
     range: ViewRange;
+    displayConfig: EventDisplayConfig;
     oneditEvent: (event: CalendarEvent) => void;
   }
 
-  let { events, style, range, oneditEvent }: Props = $props();
+  let { events, style, range, displayConfig, oneditEvent }: Props = $props();
 
   let subFontSize = $derived(Math.max(style.eventFontSize - 2, 8));
 
@@ -79,17 +80,14 @@
             style="background-color: {ev.color || style.eventDefaultColor};"
           ></div>
           <div class="min-w-0" style="font-size: {style.eventFontSize}px;">
-            <div class="font-medium truncate">{ev.title}</div>
-            {#if !ev.allDay}
-              <div class="text-gray-400" style="font-size: {subFontSize}px;">
-                {formatTime(new Date(ev.start))} - {formatTime(new Date(ev.end))}
-              </div>
-            {:else}
-              <div class="text-gray-400" style="font-size: {subFontSize}px;">終日</div>
-            {/if}
-            {#if ev.location}
-              <div class="text-gray-400" style="font-size: {subFontSize}px;">{ev.location}</div>
-            {/if}
+            {#each buildEventRows(ev, displayConfig) as row}
+              {@const fs = row.fontSize ?? (row.hasTitle ? style.eventFontSize : subFontSize)}
+              {#if row.hasTitle}
+                <div class="truncate whitespace-pre" class:font-bold={row.bold} style="font-size: {fs}px;">{row.text}</div>
+              {:else}
+                <div class="text-gray-400 whitespace-pre-wrap" class:font-bold={row.bold} style="font-size: {fs}px;">{row.text}</div>
+              {/if}
+            {/each}
           </div>
         </button>
       {/each}

@@ -4,4 +4,14 @@
 
 html {
   font-family: 'Noto Sans JP', sans-serif;
+  scrollbar-gutter: stable;
+}
+
+[class~="overflow-auto"],
+[class~="overflow-scroll"],
+[class~="overflow-y-auto"],
+[class~="overflow-y-scroll"],
+[class~="overflow-x-auto"],
+[class~="overflow-x-scroll"] {
+  scrollbar-gutter: stable;
 }

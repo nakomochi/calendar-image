@@ -1,16 +1,17 @@
 <script lang="ts">
-  import { getWeekdayLabel, isSameDay, getEventsForDay, formatTime, formatDayLabel, getRangeGridDays, isDayInRange, getCurrentMonthGrid, hasValidRange } from '$lib/calendar/utils';
-  import type { CalendarEvent, CalendarStyle, ViewRange } from '$lib/types';
+  import { getWeekdayLabel, isSameDay, getEventsForDay, formatDayLabel, getRangeGridDays, isDayInRange, getCurrentMonthGrid, hasValidRange, buildEventRows } from '$lib/calendar/utils';
+  import type { CalendarEvent, CalendarStyle, EventDisplayConfig, ViewRange } from '$lib/types';
 
   interface Props {
     events: CalendarEvent[];
     style: CalendarStyle;
     range: ViewRange;
+    displayConfig: EventDisplayConfig;
     oneditEvent: (event: CalendarEvent) => void;
     onclickDay: (date: Date) => void;
   }
 
-  let { events, style, range, oneditEvent, onclickDay }: Props = $props();
+  let { events, style, range, displayConfig, oneditEvent, onclickDay }: Props = $props();
 
   let days = $derived(
     hasValidRange(range)
@@ -65,10 +66,13 @@
                   : `flex: none; height: ${style.eventFixedSize}px;`}"
               onclick={(e) => { e.stopPropagation(); oneditEvent(ev); }}
             >
-              {#if !ev.allDay}
-                <span class="font-medium">{formatTime(new Date(ev.start))}</span>
-              {/if}
-              {ev.title}
+              {#each buildEventRows(ev, displayConfig) as row}
+                <div
+                  class="truncate whitespace-pre"
+                  class:font-bold={row.bold}
+                  style={row.fontSize !== undefined ? `font-size: ${row.fontSize}px;` : ''}
+                >{row.text}</div>
+              {/each}
             </button>
           {/each}
         </div>
