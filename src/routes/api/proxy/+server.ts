@@ -50,7 +50,7 @@ export const GET: RequestHandler = async ({ url }) => {
     }
 
     if (!res.ok) {
-      return new Response(`Upstream error: ${res.status}`, { status: 502 });
+      return new Response(`Upstream error: ${res.status} ${res.statusText}`, { status: res.status });
     }
 
     const contentLength = res.headers.get('content-length');
