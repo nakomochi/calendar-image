@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getWeekdayLabel, getEventsForDay, formatDayLabel, isSameDay, layoutEvents, isDayInRange, getTimeRangeHours, getRangeDays, getWeekDays, hasValidRange, buildEventRows } from '$lib/calendar/utils';
+  import { getWeekdayLabel, getEventsForDay, formatDayLabel, isSameDay, layoutEvents, isDayInRange, getTimeRangeHours, getRangeDays, getWeekDays, hasValidRange, buildEventRows, minutesOfDay } from '$lib/calendar/utils';
   import type { CalendarEvent, CalendarStyle, EventDisplayConfig, ViewRange } from '$lib/types';
 
   interface Props {
@@ -18,7 +18,6 @@
       : getWeekDays(new Date())
   );
   let today = new Date();
-  const HOUR_HEIGHT = 48;
 
   let timeRange = $derived(getTimeRangeHours(range));
   let visibleStartHour = $derived(Math.floor(timeRange.startHour));
@@ -26,11 +25,14 @@
   let visibleHours = $derived(
     Array.from({ length: visibleEndHour - visibleStartHour }, (_, i) => visibleStartHour + i)
   );
-  let totalHeight = $derived(visibleHours.length * HOUR_HEIGHT);
+  let gridContainerHeight = $state(0);
+  let hourHeight = $derived(
+    visibleHours.length > 0 ? gridContainerHeight / visibleHours.length : 0
+  );
+  let totalHeight = $derived(gridContainerHeight);
 
   function getEventTop(ev: CalendarEvent): number {
-    const start = new Date(ev.start);
-    const minutes = start.getHours() * 60 + start.getMinutes();
+    const minutes = minutesOfDay(new Date(ev.start));
     return ((minutes - visibleStartHour * 60) / (visibleHours.length * 60)) * totalHeight;
   }
 
@@ -103,11 +105,11 @@
   {/if}
 
   <!-- Time grid -->
-  <div class="flex flex-1 overflow-y-auto min-h-0">
+  <div class="flex flex-1 overflow-hidden min-h-0" bind:clientHeight={gridContainerHeight}>
     <!-- Hour labels -->
     <div class="w-[60px] shrink-0">
       {#each visibleHours as hour}
-        <div class="text-[10px] text-gray-400 text-right pr-1 border-t" style="height: {HOUR_HEIGHT}px; border-color: {style.gridLineColor};">
+        <div class="text-[10px] text-gray-400 text-right pr-1 border-t" style="height: {hourHeight}px; border-color: {style.gridLineColor};">
           {hour.toString().padStart(2, '0')}:00
         </div>
       {/each}
@@ -131,7 +133,7 @@
         {#each visibleHours as hour, idx}
           <div
             class="absolute left-0 right-0 border-t"
-            style="top: {idx * HOUR_HEIGHT}px; border-color: {style.gridLineColor};"
+            style="top: {idx * hourHeight}px; border-color: {style.gridLineColor};"
           ></div>
         {/each}
 

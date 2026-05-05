@@ -69,6 +69,10 @@ export function formatTime(date: Date): string {
   return date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
 }
 
+export function minutesOfDay(d: Date): number {
+  return d.getHours() * 60 + d.getMinutes();
+}
+
 export function formatDate(date: Date): string {
   return date.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' });
 }

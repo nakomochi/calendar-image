@@ -1,15 +1,8 @@
 import type { RequestHandler } from './$types';
+import { ALLOWED_HOSTS, UTOKYO_HOSTS, isHostAllowed } from '$lib/ical/hosts';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const FETCH_TIMEOUT = 10_000; // 10s
-
-const ALLOWED_HOSTS = [
-  'calendar.google.com',
-  'outlook.office365.com',
-  'outlook.live.com',
-  'calendar.icloud.com',
-  'u-tokyo.ac.jp',
-];
 
 export const GET: RequestHandler = async ({ url }) => {
   const target = url.searchParams.get('url');
@@ -28,10 +21,8 @@ export const GET: RequestHandler = async ({ url }) => {
     return new Response('Only HTTPS URLs are allowed', { status: 400 });
   }
 
-  const hostAllowed = ALLOWED_HOSTS.some(
-    (h) => parsed.hostname === h || parsed.hostname.endsWith(`.${h}`)
-  );
-  if (!hostAllowed) {
+  const allowed = url.searchParams.get('strict') === 'utokyo' ? UTOKYO_HOSTS : ALLOWED_HOSTS;
+  if (!isHostAllowed(parsed.hostname, allowed)) {
     return new Response(`Host not allowed: ${parsed.hostname}`, { status: 403 });
   }
 

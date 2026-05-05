@@ -1,54 +1,124 @@
 <script lang="ts">
-  import { events, style, viewType, exportSettings, viewRange, eventDisplay } from '$lib/stores';
+  import { page } from '$app/state';
+  import { events, style, viewType, exportSettings, viewRange, eventDisplay, utokyoMode, timetableConfig, patchEvents } from '$lib/stores';
   import { visibleEvents } from '$lib/stores';
   import { getEventsForDay } from '$lib/calendar/utils';
   import GridView from '$lib/components/GridView.svelte';
   import TimelineView from '$lib/components/TimelineView.svelte';
   import ListView from '$lib/components/ListView.svelte';
+  import TimetableView from '$lib/components/TimetableView.svelte';
   import EventEditModal from '$lib/components/EventEditModal.svelte';
   import DayEventsModal from '$lib/components/DayEventsModal.svelte';
+  import CellCoursesModal from '$lib/components/CellCoursesModal.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
   import type { CalendarEvent } from '$lib/types';
+  import {
+    buildCellOverview,
+    buildTimetable,
+    filterEventsByTerm,
+    joinTermKey,
+    type CellOverview,
+    type Course,
+    type Period,
+    type TimetableWeekday,
+  } from '$lib/calendar/timetable';
 
   let calendarEl: HTMLElement | null = $state(null);
   let editingEvent: CalendarEvent | null = $state(null);
+  let editingCourse: Course | null = $state(null);
   let selectedDay: Date | null = $state(null);
+  let selectedCell: { weekday: TimetableWeekday; period: Period } | null = $state(null);
+
+  let activeTermSpec = $derived({
+    year: $timetableConfig.termYear,
+    key: joinTermKey($timetableConfig.termSemester, $timetableConfig.termPart),
+  });
+
+  let timetableAllEvents = $derived(filterEventsByTerm($events, activeTermSpec));
+  let timetableAllMatrix = $derived(buildTimetable(timetableAllEvents));
+
+  let cellOverview: CellOverview | null = $derived.by(() => {
+    const sc = selectedCell;
+    if (!sc) return null;
+    return buildCellOverview(timetableAllMatrix, sc.weekday, sc.period);
+  });
+
+  let lastUtokyoMode: boolean | null = null;
+  $effect(() => {
+    const mode = page.data?.utokyoMode === true;
+    if (mode === lastUtokyoMode) return;
+    utokyoMode.set(mode);
+    if (mode) {
+      viewType.set('timetable');
+    } else {
+      viewType.update((v) => (v === 'timetable' ? 'grid' : v));
+    }
+    lastUtokyoMode = mode;
+  });
 
   let selectedDayEvents = $derived(
     selectedDay ? getEventsForDay($events, selectedDay) : []
   );
 
+  function patchCourseEvents(course: Course, patch: Partial<CalendarEvent>) {
+    patchEvents(new Set(course.sourceEvents.map((e) => e.id)), patch);
+  }
+
   function handleEditEvent(event: CalendarEvent) {
+    editingCourse = null;
     editingEvent = event;
+  }
+
+  function handleEditCourse(course: Course) {
+    editingCourse = course;
+    editingEvent = course.latestEvent;
   }
 
   function handleClickDay(date: Date) {
     selectedDay = date;
   }
 
+  function handleClickCell(weekday: TimetableWeekday, period: Period) {
+    selectedCell = { weekday, period };
+  }
+
+  function handleToggleCourse(course: Course) {
+    const next = course.sourceEvents.every((e) => !e.visible);
+    patchCourseEvents(course, { visible: next });
+  }
+
   function handleSaveEvent(updated: CalendarEvent) {
-    events.update((evts) => evts.map((e) => (e.id === updated.id ? updated : e)));
+    if (editingCourse) {
+      patchCourseEvents(editingCourse, {
+        title: updated.title,
+        description: updated.description,
+        location: updated.location,
+        color: updated.color,
+      });
+      return;
+    }
+    patchEvents(new Set([updated.id]), updated);
   }
 
   function handleToggleVisibility(id: string) {
-    events.update((evts) =>
-      evts.map((e) => (e.id === id ? { ...e, visible: !e.visible } : e))
-    );
+    if (editingCourse) {
+      const next = editingCourse.sourceEvents.every((e) => !e.visible);
+      patchCourseEvents(editingCourse, { visible: next });
+      return;
+    }
+    const target = $events.find((e) => e.id === id);
+    if (!target) return;
+    patchEvents(new Set([id]), { visible: !target.visible });
   }
 
-  function handleRestoreEvent(id: string) {
-    events.update((evts) =>
-      evts.map((e) => (e.id === id ? { ...e, visible: true } : e))
-    );
-  }
 </script>
 
 <svelte:head>
-  <title>Calendar Image Generator</title>
+  <title>{$utokyoMode ? '東大カレンダー' : 'Calendar Image Generator'}</title>
 </svelte:head>
 
 <div class="flex h-screen bg-base-300">
-  <Sidebar {calendarEl} onclickDay={handleClickDay} onrestoreEvent={handleRestoreEvent} />
+  <Sidebar {calendarEl} onclickDay={handleClickDay} />
 
   <main class="flex-1 p-6 overflow-auto flex items-center justify-center">
     <div
@@ -73,6 +143,14 @@
           displayConfig={$eventDisplay}
           oneditEvent={handleEditEvent}
         />
+      {:else if $viewType === 'timetable'}
+        <TimetableView
+          matrix={timetableAllMatrix}
+          style={$style}
+          config={$timetableConfig}
+          oneditCourse={handleEditCourse}
+          onclickCell={handleClickCell}
+        />
       {:else}
         <ListView
           events={$visibleEvents}
@@ -94,9 +172,20 @@
   oneditEvent={handleEditEvent}
 />
 
+<CellCoursesModal
+  overview={cellOverview}
+  style={$style}
+  onclose={() => (selectedCell = null)}
+  oneditCourse={handleEditCourse}
+  ontoggleCourse={handleToggleCourse}
+/>
+
 <EventEditModal
   event={editingEvent}
-  onclose={() => (editingEvent = null)}
+  onclose={() => {
+    editingEvent = null;
+    editingCourse = null;
+  }}
   onsave={handleSaveEvent}
   ontoggleVisibility={handleToggleVisibility}
 />

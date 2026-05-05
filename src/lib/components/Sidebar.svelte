@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { style, viewType, exportSettings, events, viewRange, hiddenEvents } from '$lib/stores';
+  import { style, viewType, exportSettings, events, viewRange, hiddenEvents, utokyoMode, timetableConfig, patchEvents } from '$lib/stores';
   import { exportToImage } from '$lib/export/image';
   import { parseICS, fetchICS } from '$lib/ical/parser';
+  import { isHostAllowed, UTOKYO_HOSTS } from '$lib/ical/hosts';
   import { formatDate } from '$lib/calendar/utils';
-  import type { ViewType } from '$lib/types';
+  import { listTermYears } from '$lib/calendar/timetable';
+  import type { CalendarEvent, ViewType } from '$lib/types';
   import EventDisplayEditor from './EventDisplayEditor.svelte';
 
   let hiddenOpen = $state(false);
@@ -11,27 +13,79 @@
   interface Props {
     calendarEl: HTMLElement | null;
     onclickDay: (date: Date) => void;
-    onrestoreEvent: (id: string) => void;
   }
 
-  let { calendarEl, onclickDay, onrestoreEvent }: Props = $props();
+  let { calendarEl, onclickDay }: Props = $props();
 
   let icsUrl = $state('');
   let loading = $state(false);
   let error = $state('');
 
-  const viewOptions: { value: ViewType; label: string }[] = [
+  const BASE_VIEW_OPTIONS: { value: ViewType; label: string }[] = [
     { value: 'grid', label: 'グリッド' },
     { value: 'timeline', label: 'タイムライン' },
     { value: 'list', label: 'リスト' },
   ];
+  const TIMETABLE_OPTION: { value: ViewType; label: string } = { value: 'timetable', label: '時間割' };
+
+  let viewOptions = $derived(
+    $utokyoMode ? [TIMETABLE_OPTION, ...BASE_VIEW_OPTIONS] : BASE_VIEW_OPTIONS,
+  );
+
+  let termYears = $derived(listTermYears($events));
+
+  // Collapse repeated occurrences (e.g. weekly courses) into a single row in the hidden list.
+  function hiddenGroupKey(ev: CalendarEvent): string {
+    if (ev.allDay) return `allday::${ev.title}`;
+    const d = new Date(ev.start);
+    return `${d.getDay()}::${d.getHours()}:${d.getMinutes()}::${ev.title}`;
+  }
+
+  let hiddenGroups = $derived.by(() => {
+    const map = new Map<string, CalendarEvent[]>();
+    for (const ev of $hiddenEvents) {
+      const k = hiddenGroupKey(ev);
+      const arr = map.get(k);
+      if (arr) arr.push(ev);
+      else map.set(k, [ev]);
+    }
+    return [...map.entries()].map(([key, evs]) => ({ key, events: evs }));
+  });
+
+  function restoreGroup(group: CalendarEvent[]) {
+    patchEvents(new Set(group.map((e) => e.id)), { visible: true });
+  }
+
+  function validateUTokyoHost(u: string): string {
+    let parsed: URL;
+    try {
+      parsed = new URL(u);
+    } catch {
+      return '無効な URL です';
+    }
+    if (!isHostAllowed(parsed.hostname, UTOKYO_HOSTS)) {
+      return 'utokyo モードでは u-tokyo.ac.jp ドメインの URL のみ使用可能です';
+    }
+    return '';
+  }
 
   async function loadFromUrl() {
     if (!icsUrl.trim()) return;
+    if ($utokyoMode) {
+      const msg = validateUTokyoHost(icsUrl);
+      if (msg) {
+        error = msg;
+        return;
+      }
+    }
     loading = true;
     error = '';
     try {
-      const text = await fetchICS(icsUrl, '/api/proxy');
+      const text = await fetchICS(
+        icsUrl,
+        '/api/proxy',
+        $utokyoMode ? { strict: 'utokyo' } : undefined,
+      );
       const parsed = parseICS(text);
       events.set(parsed);
     } catch (e) {
@@ -86,7 +140,12 @@
   <div class="space-y-2">
     <h3 class="font-bold text-sm">インポート</h3>
     <div class="flex gap-1">
-      <input type="text" class="input input-bordered input-sm flex-1" placeholder="iCS URL" bind:value={icsUrl} />
+      <input
+        type="text"
+        class="input input-bordered input-sm flex-1"
+        placeholder={$utokyoMode ? 'u-tokyo.ac.jp の ICS URL' : 'iCS URL'}
+        bind:value={icsUrl}
+      />
       <button class="btn btn-primary btn-sm" onclick={loadFromUrl} disabled={loading}>
         {loading ? '...' : '読込'}
       </button>
@@ -150,6 +209,38 @@
       </label>
     {/if}
   </div>
+
+  {#if $viewType === 'timetable'}
+    <div class="space-y-2">
+      <h3 class="font-bold text-sm">時間割</h3>
+      <div class="text-xs">集計期間</div>
+      <div class="flex gap-1">
+        <select class="select select-bordered select-xs flex-1 min-w-0 px-1" bind:value={$timetableConfig.termYear}>
+          {#each termYears as y}
+            <option value={y}>{y}</option>
+          {/each}
+        </select>
+        <select class="select select-bordered select-xs flex-1 min-w-0 px-1" bind:value={$timetableConfig.termSemester}>
+          <option value="S">S</option>
+          <option value="A">A</option>
+        </select>
+        <select class="select select-bordered select-xs flex-1 min-w-0 px-1" bind:value={$timetableConfig.termPart}>
+          <option value="">全体</option>
+          <option value="1">{$timetableConfig.termSemester}1</option>
+          <option value="2">{$timetableConfig.termSemester}2</option>
+        </select>
+      </div>
+      <label class="flex items-center gap-2 text-xs">
+        <input type="checkbox" class="checkbox checkbox-xs" bind:checked={$timetableConfig.showSaturday} />
+        <span>土曜を表示</span>
+      </label>
+      <label class="flex items-center gap-2 text-xs">
+        <input type="checkbox" class="checkbox checkbox-xs" bind:checked={$timetableConfig.showPeriod6} />
+        <span>6限を表示</span>
+      </label>
+      <div class="text-[10px] text-gray-400">マスを右クリックで編集 / 左クリックで詳細</div>
+    </div>
+  {/if}
 
   <!-- Style -->
   <div class="space-y-2">
@@ -234,27 +325,29 @@
     <div class="space-y-2">
       <button class="flex items-center gap-1 font-bold text-sm w-full text-left cursor-pointer" onclick={() => hiddenOpen = !hiddenOpen}>
         <span class="text-xs">{hiddenOpen ? '▼' : '▶'}</span>
-        <span>非表示の予定 ({$hiddenEvents.length})</span>
+        <span>非表示の予定 ({$viewType === 'timetable' ? hiddenGroups.length : $hiddenEvents.length})</span>
       </button>
       {#if hiddenOpen}
         <div class="space-y-1 max-h-48 overflow-y-auto">
-          {#each $hiddenEvents as ev}
+          {#each hiddenGroups as group (group.key)}
+            {@const head = group.events[0]}
+            {@const showCount = $viewType !== 'timetable' && group.events.length > 1}
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
               class="flex items-center gap-2 text-xs bg-base-100 rounded px-2 py-1.5 w-full text-left cursor-pointer hover:bg-base-300"
-              onclick={() => onclickDay(new Date(ev.start))}
+              onclick={() => onclickDay(new Date(head.start))}
               onkeydown={() => {}}
               role="button"
               tabindex="0"
             >
-              <div class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: {ev.color || $style.eventDefaultColor};"></div>
+              <div class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: {head.color || $style.eventDefaultColor};"></div>
               <div class="min-w-0 flex-1">
-                <div class="truncate">{ev.title}</div>
-                <div class="text-[10px] text-gray-400">{formatDate(new Date(ev.start))}</div>
+                <div class="truncate">{head.title}{showCount ? ` × ${group.events.length}` : ''}</div>
+                <div class="text-[10px] text-gray-400">{formatDate(new Date(head.start))}</div>
               </div>
               <button
                 class="btn btn-ghost btn-xs px-1 shrink-0"
-                onclick={(e) => { e.stopPropagation(); onrestoreEvent(ev.id); }}
+                onclick={(e) => { e.stopPropagation(); restoreGroup(group.events); }}
               >
                 表示
               </button>

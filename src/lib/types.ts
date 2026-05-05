@@ -10,7 +10,7 @@ export interface CalendarEvent {
   color: string;
 }
 
-export type ViewType = 'grid' | 'timeline' | 'list';
+export type ViewType = 'grid' | 'timeline' | 'list' | 'timetable';
 
 export type EventSizing = 'equal' | 'fixed';
 export type EventAlign = 'start' | 'center';
@@ -45,8 +45,8 @@ export const DEFAULT_VIEW_RANGE: ViewRange = {
   start: '',
   end: '',
   grayout: false,
-  startTime: '00:00',
-  endTime: '24:00',
+  startTime: '08:00',
+  endTime: '22:00',
 };
 
 export interface ExportSettings {
@@ -78,6 +78,18 @@ export const DEFAULT_EXPORT: ExportSettings = {
   width: 1200,
   height: 900,
 };
+
+export type Semester = 'S' | 'A';
+// '' = whole semester, '1' = S1/A1, '2' = S2/A2
+export type TermPart = '' | '1' | '2';
+
+export interface TimetableConfig {
+  showSaturday: boolean;
+  showPeriod6: boolean;
+  termYear: number;
+  termSemester: Semester;
+  termPart: TermPart;
+}
 
 export type EventField = 'startTime' | 'endTime' | 'title' | 'location' | 'allDayLabel';
 

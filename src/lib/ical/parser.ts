@@ -40,10 +40,23 @@ export function parseICS(icsText: string): CalendarEvent[] {
   return results;
 }
 
-export async function fetchICS(url: string, proxyBase?: string): Promise<string> {
-  const fetchUrl = proxyBase
-    ? `${proxyBase}?url=${encodeURIComponent(url)}`
-    : url;
+export interface FetchICSOptions {
+  strict?: 'utokyo';
+}
+
+export async function fetchICS(
+  url: string,
+  proxyBase?: string,
+  opts?: FetchICSOptions,
+): Promise<string> {
+  let fetchUrl: string;
+  if (proxyBase) {
+    const params = new URLSearchParams({ url });
+    if (opts?.strict) params.set('strict', opts.strict);
+    fetchUrl = `${proxyBase}?${params.toString()}`;
+  } else {
+    fetchUrl = url;
+  }
 
   const res = await fetch(fetchUrl);
   if (!res.ok) {
