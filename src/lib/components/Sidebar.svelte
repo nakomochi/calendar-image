@@ -1,12 +1,31 @@
 <script lang="ts">
-  import { style, viewType, exportSettings, events, viewRange, hiddenEvents, utokyoMode, timetableConfig, patchEvents } from '$lib/stores';
-  import { exportToImage } from '$lib/export/image';
+  import { events, viewType, hiddenEvents, utokyoMode, style, patchEvents } from '$lib/stores';
   import { parseICS, fetchICS } from '$lib/ical/parser';
   import { isHostAllowed, UTOKYO_HOSTS } from '$lib/ical/hosts';
   import { formatDate } from '$lib/calendar/utils';
-  import { listTermYears } from '$lib/calendar/timetable';
+  import type { Component } from 'svelte';
   import type { CalendarEvent, ViewType } from '$lib/types';
-  import EventDisplayEditor from './EventDisplayEditor.svelte';
+  import { VIEW_MODULES, type SettingModule } from '$lib/settings/capabilities';
+  import DateRangeSection from './sidebar/DateRangeSection.svelte';
+  import TimeRangeSection from './sidebar/TimeRangeSection.svelte';
+  import TimetableConfigSection from './sidebar/TimetableConfigSection.svelte';
+  import StyleSection from './sidebar/StyleSection.svelte';
+  import TodayHighlightSection from './sidebar/TodayHighlightSection.svelte';
+  import EventDisplaySection from './sidebar/EventDisplaySection.svelte';
+  import TimetableEventDisplaySection from './sidebar/TimetableEventDisplaySection.svelte';
+  import EventBlockSection from './sidebar/EventBlockSection.svelte';
+  import ExportSection from './sidebar/ExportSection.svelte';
+
+  const SECTION_COMPONENT: Record<SettingModule, Component> = {
+    dateRange: DateRangeSection,
+    timeRange: TimeRangeSection,
+    timetableConfig: TimetableConfigSection,
+    style: StyleSection,
+    todayHighlight: TodayHighlightSection,
+    eventDisplay: EventDisplaySection,
+    timetableEventDisplay: TimetableEventDisplaySection,
+    eventBlock: EventBlockSection,
+  };
 
   let hiddenOpen = $state(false);
 
@@ -32,7 +51,7 @@
     $utokyoMode ? [TIMETABLE_OPTION, ...BASE_VIEW_OPTIONS] : BASE_VIEW_OPTIONS,
   );
 
-  let termYears = $derived(listTermYears($events));
+  let activeModules = $derived(VIEW_MODULES[$viewType]);
 
   // Collapse repeated occurrences (e.g. weekly courses) into a single row in the hidden list.
   function hiddenGroupKey(ev: CalendarEvent): string {
@@ -124,15 +143,6 @@
     };
     reader.readAsText(file);
   }
-
-  async function handleExport() {
-    if (!calendarEl) return;
-    try {
-      await exportToImage(calendarEl, $exportSettings);
-    } catch (e) {
-      error = e instanceof Error ? e.message : 'Export failed';
-    }
-  }
 </script>
 
 <aside class="w-90 bg-base-200 p-4 flex flex-col gap-4 overflow-y-auto shrink-0">
@@ -183,142 +193,10 @@
     </div>
   </div>
 
-  <!-- Range -->
-  <div class="space-y-2">
-    <h3 class="font-bold text-sm">表示範囲</h3>
-    <label class="flex items-center justify-between text-xs">
-      <span>開始日</span>
-      <input type="date" class="input input-bordered input-xs w-36" bind:value={$viewRange.start} />
-    </label>
-    <label class="flex items-center justify-between text-xs">
-      <span>終了日</span>
-      <input type="date" class="input input-bordered input-xs w-36" bind:value={$viewRange.end} />
-    </label>
-    <label class="flex items-center gap-2 text-xs">
-      <input type="checkbox" class="checkbox checkbox-xs" bind:checked={$viewRange.grayout} />
-      <span>範囲外をグレーアウト表示</span>
-    </label>
-    {#if $viewType === 'timeline'}
-      <label class="flex items-center justify-between text-xs">
-        <span>開始時刻</span>
-        <input type="time" class="input input-bordered input-xs w-28" bind:value={$viewRange.startTime} />
-      </label>
-      <label class="flex items-center justify-between text-xs">
-        <span>終了時刻</span>
-        <input type="time" class="input input-bordered input-xs w-28" bind:value={$viewRange.endTime} />
-      </label>
-    {/if}
-  </div>
-
-  {#if $viewType === 'timetable'}
-    <div class="space-y-2">
-      <h3 class="font-bold text-sm">時間割</h3>
-      <div class="text-xs">集計期間</div>
-      <div class="flex gap-1">
-        <select class="select select-bordered select-xs flex-1 min-w-0 px-1" bind:value={$timetableConfig.termYear}>
-          {#each termYears as y}
-            <option value={y}>{y}</option>
-          {/each}
-        </select>
-        <select class="select select-bordered select-xs flex-1 min-w-0 px-1" bind:value={$timetableConfig.termSemester}>
-          <option value="S">S</option>
-          <option value="A">A</option>
-        </select>
-        <select class="select select-bordered select-xs flex-1 min-w-0 px-1" bind:value={$timetableConfig.termPart}>
-          <option value="">全体</option>
-          <option value="1">{$timetableConfig.termSemester}1</option>
-          <option value="2">{$timetableConfig.termSemester}2</option>
-        </select>
-      </div>
-      <label class="flex items-center gap-2 text-xs">
-        <input type="checkbox" class="checkbox checkbox-xs" bind:checked={$timetableConfig.showSaturday} />
-        <span>土曜を表示</span>
-      </label>
-      <label class="flex items-center gap-2 text-xs">
-        <input type="checkbox" class="checkbox checkbox-xs" bind:checked={$timetableConfig.showPeriod6} />
-        <span>6限を表示</span>
-      </label>
-      <div class="text-[10px] text-gray-400">マスを右クリックで編集 / 左クリックで詳細</div>
-    </div>
-  {/if}
-
-  <!-- Style -->
-  <div class="space-y-2">
-    <h3 class="font-bold text-sm">スタイル</h3>
-
-    <label class="flex items-center justify-between text-xs">
-      <span>背景色</span>
-      <input type="color" class="w-8 h-6 cursor-pointer rounded" bind:value={$style.bgColor} />
-    </label>
-    <label class="flex items-center justify-between text-xs">
-      <span>文字色</span>
-      <input type="color" class="w-8 h-6 cursor-pointer rounded" bind:value={$style.textColor} />
-    </label>
-    <label class="flex items-center justify-between text-xs">
-      <span>ヘッダー背景</span>
-      <input type="color" class="w-8 h-6 cursor-pointer rounded" bind:value={$style.headerBgColor} />
-    </label>
-    <label class="flex items-center justify-between text-xs">
-      <span>ヘッダー文字</span>
-      <input type="color" class="w-8 h-6 cursor-pointer rounded" bind:value={$style.headerTextColor} />
-    </label>
-    <label class="flex items-center justify-between text-xs">
-      <span>予定の色</span>
-      <input type="color" class="w-8 h-6 cursor-pointer rounded" bind:value={$style.eventDefaultColor} />
-    </label>
-    <label class="flex items-center justify-between text-xs">
-      <span>罫線</span>
-      <input type="color" class="w-8 h-6 cursor-pointer rounded" bind:value={$style.gridLineColor} />
-    </label>
-    <label class="flex items-center gap-2 text-xs">
-      <input type="checkbox" class="checkbox checkbox-xs" bind:checked={$style.highlightToday} />
-      <span>今日をハイライト</span>
-    </label>
-    <label class="flex items-center justify-between text-xs" class:opacity-50={!$style.highlightToday}>
-      <span>今日の背景</span>
-      <input type="color" class="w-8 h-6 cursor-pointer rounded" bind:value={$style.todayBgColor} disabled={!$style.highlightToday} />
-    </label>
-    <label class="flex items-center justify-between text-xs">
-      <span>角丸</span>
-      <input type="range" class="range range-xs range-primary w-24" min="0" max="24" bind:value={$style.borderRadius} />
-    </label>
-    <label class="flex items-center justify-between text-xs">
-      <span>日付文字サイズ</span>
-      <input type="number" class="input input-bordered input-xs w-20" min="6" max="48" bind:value={$style.dateFontSize} />
-    </label>
-    <label class="flex items-center justify-between text-xs">
-      <span>予定文字サイズ</span>
-      <input type="number" class="input input-bordered input-xs w-20" min="6" max="48" bind:value={$style.eventFontSize} />
-    </label>
-  </div>
-
-  <!-- Event Display -->
-  <EventDisplayEditor />
-
-  <!-- Event Block -->
-  <div class="space-y-2">
-    <h3 class="font-bold text-sm">予定ブロック</h3>
-    <label class="flex items-center justify-between text-xs">
-      <span>サイズ</span>
-      <select class="select select-bordered select-xs" bind:value={$style.eventSizing}>
-        <option value="equal">均等分割</option>
-        <option value="fixed">固定サイズ</option>
-      </select>
-    </label>
-    {#if $style.eventSizing === 'fixed'}
-      <label class="flex items-center justify-between text-xs">
-        <span>固定サイズ (px)</span>
-        <input type="number" class="input input-bordered input-xs w-20" min="10" max="200" bind:value={$style.eventFixedSize} />
-      </label>
-    {/if}
-    <label class="flex items-center justify-between text-xs">
-      <span>配置</span>
-      <select class="select select-bordered select-xs" bind:value={$style.eventAlign}>
-        <option value="start">上揃え</option>
-        <option value="center">中央揃え</option>
-      </select>
-    </label>
-  </div>
+  {#each activeModules as mod (mod)}
+    {@const Section = SECTION_COMPONENT[mod]}
+    <Section />
+  {/each}
 
   <!-- Hidden Events -->
   {#if $hiddenEvents.length > 0}
@@ -358,24 +236,5 @@
     </div>
   {/if}
 
-  <!-- Export -->
-  <div class="space-y-2">
-    <h3 class="font-bold text-sm">エクスポート</h3>
-    <label class="flex items-center justify-between text-xs">
-      <span>形式</span>
-      <select class="select select-bordered select-xs" bind:value={$exportSettings.format}>
-        <option value="png">PNG</option>
-        <option value="jpg">JPG</option>
-      </select>
-    </label>
-    <label class="flex items-center justify-between text-xs">
-      <span>幅</span>
-      <input type="number" class="input input-bordered input-xs w-20" bind:value={$exportSettings.width} />
-    </label>
-    <label class="flex items-center justify-between text-xs">
-      <span>高さ</span>
-      <input type="number" class="input input-bordered input-xs w-20" bind:value={$exportSettings.height} />
-    </label>
-    <button class="btn btn-primary btn-sm w-full" onclick={handleExport}>画像をダウンロード</button>
-  </div>
+  <ExportSection {calendarEl} />
 </aside>

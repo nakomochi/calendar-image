@@ -28,9 +28,9 @@
       style="background-color: {course.sourceEvents[0]?.color || style.eventDefaultColor};"
     ></div>
     <div class="min-w-0 flex-1">
-      <div class="text-sm font-medium truncate">{course.title}</div>
+      <div class="text-sm font-medium whitespace-pre-wrap break-words">{course.title}</div>
       {#if course.location}
-        <div class="text-xs text-gray-400 truncate">{course.location}</div>
+        <div class="text-xs text-gray-400 whitespace-pre-wrap break-words">{course.location}</div>
       {/if}
     </div>
     <button

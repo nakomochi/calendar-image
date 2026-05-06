@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { events, style, viewType, exportSettings, viewRange, eventDisplay, utokyoMode, timetableConfig, patchEvents } from '$lib/stores';
+  import { events, style, viewType, exportSettings, dateRange, timeRange, eventDisplay, timetableEventDisplay, utokyoMode, timetableConfig, patchEvents } from '$lib/stores';
   import { visibleEvents } from '$lib/stores';
   import { getEventsForDay } from '$lib/calendar/utils';
   import GridView from '$lib/components/GridView.svelte';
@@ -130,7 +130,7 @@
         <GridView
           events={$visibleEvents}
           style={$style}
-          range={$viewRange}
+          range={$dateRange}
           displayConfig={$eventDisplay}
           oneditEvent={handleEditEvent}
           onclickDay={handleClickDay}
@@ -139,7 +139,8 @@
         <TimelineView
           events={$visibleEvents}
           style={$style}
-          range={$viewRange}
+          range={$dateRange}
+          timeRange={$timeRange}
           displayConfig={$eventDisplay}
           oneditEvent={handleEditEvent}
         />
@@ -148,6 +149,7 @@
           matrix={timetableAllMatrix}
           style={$style}
           config={$timetableConfig}
+          displayConfig={$timetableEventDisplay}
           oneditCourse={handleEditCourse}
           onclickCell={handleClickCell}
         />
@@ -155,7 +157,7 @@
         <ListView
           events={$visibleEvents}
           style={$style}
-          range={$viewRange}
+          range={$dateRange}
           displayConfig={$eventDisplay}
           oneditEvent={handleEditEvent}
         />

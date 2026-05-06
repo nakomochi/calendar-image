@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getWeekdayLabel } from '$lib/calendar/utils';
+  import { buildEventRows, getWeekdayLabel } from '$lib/calendar/utils';
   import {
     PERIODS,
     TIMETABLE_WEEKDAYS,
@@ -10,17 +10,18 @@
     type TimetableMatrix,
     type TimetableWeekday,
   } from '$lib/calendar/timetable';
-  import type { CalendarStyle, TimetableConfig } from '$lib/types';
+  import type { CalendarStyle, EventDisplayConfig, TimetableConfig } from '$lib/types';
 
   interface Props {
     matrix: TimetableMatrix;
     style: CalendarStyle;
     config: TimetableConfig;
+    displayConfig: EventDisplayConfig;
     oneditCourse?: (course: Course) => void;
     onclickCell?: (weekday: TimetableWeekday, period: Period) => void;
   }
 
-  let { matrix, style, config, oneditCourse, onclickCell }: Props = $props();
+  let { matrix, style, config, displayConfig, oneditCourse, onclickCell }: Props = $props();
 
   let weekdays = $derived(
     config.showSaturday ? TIMETABLE_WEEKDAYS : TIMETABLE_WEEKDAYS.filter((w) => w !== 6),
@@ -29,11 +30,16 @@
     config.showPeriod6 ? PERIODS : PERIODS.filter((p) => p.index !== 6),
   );
 
-  function visibleCoursesAt(wd: TimetableWeekday, periodIndex: number): Course[] {
-    const courses = matrix.get(cellKey(wd, periodIndex));
-    if (!courses) return [];
-    return courses.filter((c) => c.sourceEvents.some((e) => e.visible));
-  }
+  let visibleMatrix = $derived.by(() => {
+    const result = new Map<string, Course[]>();
+    for (const [key, courses] of matrix) {
+      const visible = courses.filter((c) => c.sourceEvents.some((e) => e.visible));
+      if (visible.length > 0) result.set(key, visible);
+    }
+    return result;
+  });
+
+  let cellBg = $derived(withAlpha(style.eventDefaultColor, 0.14));
 
   function withAlpha(hex: string, alpha: number): string {
     const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
@@ -80,13 +86,13 @@
           {pi === periods.length - 1 ? `border-bottom-left-radius: ${style.borderRadius}px;` : ''}"
       >
         <div class="text-sm font-bold leading-tight">{p.label}</div>
-        <div class="leading-tight" style="font-size: {Math.max(9, style.dateFontSize - 2)}px; opacity: 0.85;">
+        <div class="leading-tight" style="font-size: {Math.max(9, style.eventFontSize - 1)}px; opacity: 0.85;">
           {formatPeriodTime(p)}
         </div>
       </div>
 
       {#each weekdays as wd, wi}
-        {@const courses = visibleCoursesAt(wd, p.index)}
+        {@const courses = visibleMatrix.get(cellKey(wd, p.index)) ?? []}
         {@const isLastCol = wi === weekdays.length - 1}
         {@const isLastRow = pi === periods.length - 1}
         <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -100,24 +106,20 @@
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
               class="flex-1 flex flex-col items-center justify-center text-center px-1.5 py-1 overflow-hidden"
-              style="background-color: {withAlpha(style.eventDefaultColor, 0.14)};"
+              style="background-color: {cellBg};"
               oncontextmenu={(e) => handleCourseContextmenu(e, course)}
               title="右クリックで編集"
             >
-              <div
-                class="font-bold leading-snug w-full break-words"
-                style="font-size: {style.eventFontSize + 2}px; color: {style.textColor};"
-              >
-                {course.title}
-              </div>
-              {#if course.location}
+              {#each buildEventRows(course.latestEvent, displayConfig) as row}
+                {@const fs = row.fontSize ?? (row.hasTitle ? style.eventFontSize + 2 : style.eventFontSize)}
                 <div
-                  class="leading-tight w-full break-words mt-0.5 opacity-80"
-                  style="font-size: {style.eventFontSize}px;"
-                >
-                  {course.location}
-                </div>
-              {/if}
+                  class="leading-snug w-full whitespace-pre-wrap break-words"
+                  class:font-bold={row.bold}
+                  class:mt-0.5={!row.hasTitle}
+                  class:opacity-80={!row.hasTitle}
+                  style="font-size: {fs}px; color: {style.textColor};"
+                >{row.text}</div>
+              {/each}
             </div>
           {/each}
         </div>

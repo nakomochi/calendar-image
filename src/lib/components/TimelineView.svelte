@@ -1,16 +1,17 @@
 <script lang="ts">
   import { getWeekdayLabel, getEventsForDay, formatDayLabel, isSameDay, layoutEvents, isDayInRange, getTimeRangeHours, getRangeDays, getWeekDays, hasValidRange, buildEventRows, minutesOfDay } from '$lib/calendar/utils';
-  import type { CalendarEvent, CalendarStyle, EventDisplayConfig, ViewRange } from '$lib/types';
+  import type { CalendarEvent, CalendarStyle, DateRange, EventDisplayConfig, TimeRange } from '$lib/types';
 
   interface Props {
     events: CalendarEvent[];
     style: CalendarStyle;
-    range: ViewRange;
+    range: DateRange;
+    timeRange: TimeRange;
     displayConfig: EventDisplayConfig;
     oneditEvent: (event: CalendarEvent) => void;
   }
 
-  let { events, style, range, displayConfig, oneditEvent }: Props = $props();
+  let { events, style, range, timeRange, displayConfig, oneditEvent }: Props = $props();
 
   let days = $derived(
     hasValidRange(range)
@@ -19,9 +20,9 @@
   );
   let today = new Date();
 
-  let timeRange = $derived(getTimeRangeHours(range));
-  let visibleStartHour = $derived(Math.floor(timeRange.startHour));
-  let visibleEndHour = $derived(Math.ceil(timeRange.endHour));
+  let timeBounds = $derived(getTimeRangeHours(timeRange));
+  let visibleStartHour = $derived(Math.floor(timeBounds.startHour));
+  let visibleEndHour = $derived(Math.ceil(timeBounds.endHour));
   let visibleHours = $derived(
     Array.from({ length: visibleEndHour - visibleStartHour }, (_, i) => visibleStartHour + i)
   );
@@ -83,7 +84,7 @@
         >
           {#each allDayEvents as ev}
             <button
-              class="text-left px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80"
+              class="text-left px-1 py-0.5 rounded cursor-pointer hover:opacity-80 overflow-hidden"
               style="font-size: {style.eventFontSize}px; background-color: {ev.color || style.eventDefaultColor}; color: white;
                 {style.eventSizing === 'equal'
                   ? 'width: 100%; flex: 1 1 0%;'
@@ -92,7 +93,7 @@
             >
               {#each buildEventRows(ev, displayConfig) as row}
                 <div
-                  class="truncate whitespace-pre"
+                  class="whitespace-pre-wrap break-words"
                   class:font-bold={row.bold}
                   style={row.fontSize !== undefined ? `font-size: ${row.fontSize}px;` : ''}
                 >{row.text}</div>
@@ -150,7 +151,7 @@
           >
             {#each buildEventRows(ev, displayConfig) as row}
               <div
-                class="truncate whitespace-pre"
+                class="whitespace-pre-wrap break-words"
                 class:font-bold={row.bold}
                 style={row.fontSize !== undefined ? `font-size: ${row.fontSize}px;` : ''}
               >{row.text}</div>

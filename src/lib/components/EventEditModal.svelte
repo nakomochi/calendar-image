@@ -52,7 +52,7 @@
       <div class="space-y-3">
         <label class="form-control w-full">
           <div class="label"><span class="label-text">タイトル</span></div>
-          <input type="text" class="input input-bordered w-full" bind:value={editTitle} />
+          <textarea class="textarea textarea-bordered w-full" rows="2" bind:value={editTitle}></textarea>
         </label>
 
         <label class="form-control w-full">

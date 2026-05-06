@@ -1,4 +1,4 @@
-import type { CalendarEvent, EventDisplayConfig, EventField, ViewRange } from '../types';
+import type { CalendarEvent, DateRange, EventDisplayConfig, EventField, TimeRange } from '../types';
 
 export function getMonthDays(year: number, month: number): Date[] {
   const first = new Date(year, month, 1);
@@ -99,9 +99,7 @@ export function getHourLabels(): string[] {
   return Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
 }
 
-// View range helpers
-
-export function parseViewRange(range: ViewRange): { start: Date | null; end: Date | null } {
+export function parseDateRange(range: DateRange): { start: Date | null; end: Date | null } {
   if (!range.start || !range.end) return { start: null, end: null };
   return {
     start: new Date(range.start),
@@ -109,20 +107,26 @@ export function parseViewRange(range: ViewRange): { start: Date | null; end: Dat
   };
 }
 
-export function hasValidRange(range: ViewRange): boolean {
+export function hasValidRange(range: DateRange): boolean {
   return !!range.start && !!range.end;
 }
 
-export function isDayInRange(day: Date, range: ViewRange): boolean {
-  const { start, end } = parseViewRange(range);
+export function isDayInRange(day: Date, range: DateRange): boolean {
+  const { start, end } = parseDateRange(range);
   if (!start || !end) return true;
   const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
   const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
   return dayStart < end && dayEnd > start;
 }
 
-export function getRangeDays(range: ViewRange): Date[] {
-  const { start, end } = parseViewRange(range);
+export function eventOverlapsRange(ev: CalendarEvent, range: DateRange): boolean {
+  const { start, end } = parseDateRange(range);
+  if (!start || !end) return true;
+  return new Date(ev.start) < end && new Date(ev.end) > start;
+}
+
+export function getRangeDays(range: DateRange): Date[] {
+  const { start, end } = parseDateRange(range);
   if (!start || !end) return [];
   const days: Date[] = [];
   const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
@@ -135,8 +139,8 @@ export function getRangeDays(range: ViewRange): Date[] {
 }
 
 // Build grid that covers the range, padded to full weeks
-export function getRangeGridDays(range: ViewRange): Date[] {
-  const { start, end } = parseViewRange(range);
+export function getRangeGridDays(range: DateRange): Date[] {
+  const { start, end } = parseDateRange(range);
   if (!start || !end) return [];
 
   const firstDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
@@ -166,7 +170,7 @@ export function getCurrentMonthGrid(): Date[] {
   return getMonthDays(now.getFullYear(), now.getMonth());
 }
 
-export function getTimeRangeHours(range: ViewRange): { startHour: number; endHour: number } {
+export function getTimeRangeHours(range: TimeRange): { startHour: number; endHour: number } {
   const [sh, sm] = range.startTime.split(':').map(Number);
   const [eh, em] = range.endTime.split(':').map(Number);
   const startHour = sh + sm / 60;
@@ -285,6 +289,8 @@ function resolveField(ev: CalendarEvent, field: EventField, allDayMode: 'label' 
       return ev.title;
     case 'location':
       return ev.location;
+    case 'description':
+      return ev.description;
   }
 }
 

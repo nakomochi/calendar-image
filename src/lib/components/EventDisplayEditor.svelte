@@ -1,7 +1,18 @@
 <script lang="ts">
-  import { eventDisplay, style } from '$lib/stores';
-  import { EVENT_FIELD_LABELS, DEFAULT_EVENT_DISPLAY } from '$lib/types';
-  import type { RowItem } from '$lib/types';
+  import type { Writable } from 'svelte/store';
+  import { style } from '$lib/stores';
+  import { EVENT_FIELD_LABELS } from '$lib/types';
+  import type { EventDisplayConfig, RowItem } from '$lib/types';
+
+  interface Props {
+    store: Writable<EventDisplayConfig>;
+    defaultConfig: EventDisplayConfig;
+    title?: string;
+    // Timetable courses are never all-day, so the all-day UI is suppressed there.
+    allowAllDay?: boolean;
+  }
+
+  let { store, defaultConfig, title = '予定の表示', allowAllDay = true }: Props = $props();
 
   // row = -1 represents the hidden pool
   type Loc = { row: number; idx: number };
@@ -62,7 +73,7 @@
     if (!from) return;
     if (from.row === toRow && (toIdx === from.idx || toIdx === from.idx + 1)) return;
 
-    eventDisplay.update((cfg) => {
+    store.update((cfg) => {
       const next = structuredClone(cfg);
 
       let item: RowItem;
@@ -95,7 +106,7 @@
   }
 
   function addRow() {
-    eventDisplay.update((cfg) => {
+    store.update((cfg) => {
       const next = structuredClone(cfg);
       next.rows.push({ items: [] });
       return next;
@@ -103,7 +114,7 @@
   }
 
   function removeRow(idx: number) {
-    eventDisplay.update((cfg) => {
+    store.update((cfg) => {
       const next = structuredClone(cfg);
       const removed = next.rows.splice(idx, 1)[0];
       if (removed) {
@@ -118,17 +129,17 @@
   }
 
   function addText(rowIdx: number) {
-    eventDisplay.update((cfg) => {
+    store.update((cfg) => {
       const next = structuredClone(cfg);
       next.rows[rowIdx].items.push({ type: 'text', text: ' ' });
       return next;
     });
-    const newIdx = $eventDisplay.rows[rowIdx].items.length - 1;
+    const newIdx = $store.rows[rowIdx].items.length - 1;
     editing = { row: rowIdx, idx: newIdx };
   }
 
   function updateText(rowIdx: number, itemIdx: number, value: string) {
-    eventDisplay.update((cfg) => {
+    store.update((cfg) => {
       const next = structuredClone(cfg);
       const item = next.rows[rowIdx].items[itemIdx];
       if (item?.type === 'text') item.text = value;
@@ -137,7 +148,7 @@
   }
 
   function deleteText(rowIdx: number, itemIdx: number) {
-    eventDisplay.update((cfg) => {
+    store.update((cfg) => {
       const next = structuredClone(cfg);
       next.rows[rowIdx].items.splice(itemIdx, 1);
       return next;
@@ -150,7 +161,7 @@
   }
 
   function setRowFontSize(rowIdx: number, value: number | null) {
-    eventDisplay.update((cfg) => {
+    store.update((cfg) => {
       const next = structuredClone(cfg);
       if (value === null) delete next.rows[rowIdx].fontSize;
       else next.rows[rowIdx].fontSize = value;
@@ -159,7 +170,7 @@
   }
 
   function setRowBold(rowIdx: number, value: boolean | null) {
-    eventDisplay.update((cfg) => {
+    store.update((cfg) => {
       const next = structuredClone(cfg);
       if (value === null) delete next.rows[rowIdx].bold;
       else next.rows[rowIdx].bold = value;
@@ -168,7 +179,7 @@
   }
 
   function resetToDefault() {
-    eventDisplay.set(structuredClone(DEFAULT_EVENT_DISPLAY));
+    store.set(structuredClone(defaultConfig));
     expandedRow = null;
   }
 
@@ -182,21 +193,23 @@
 </script>
 
 <div class="space-y-2">
-  <h3 class="font-bold text-sm">予定の表示</h3>
+  <h3 class="font-bold text-sm">{title}</h3>
 
-  <label class="flex items-center justify-between text-xs">
-    <span>終日の扱い</span>
-    <select class="select select-bordered select-xs" bind:value={$eventDisplay.allDayMode}>
-      <option value="label">「終日」と表示</option>
-      <option value="omit">時間欄を省略</option>
-    </select>
-  </label>
+  {#if allowAllDay}
+    <label class="flex items-center justify-between text-xs">
+      <span>終日の扱い</span>
+      <select class="select select-bordered select-xs" bind:value={$store.allDayMode}>
+        <option value="label">「終日」と表示</option>
+        <option value="omit">時間欄を省略</option>
+      </select>
+    </label>
+  {/if}
 
   <div class="text-[10px] text-gray-500 leading-snug">
     青チップ＝項目／白チップ＝任意のテキスト。ドラッグで並び替え。「行N」をクリックでサイズ・太字を設定。
   </div>
 
-  {#each $eventDisplay.rows as row, rowIdx}
+  {#each $store.rows as row, rowIdx}
     <div class="space-y-1">
       <div
         class="border rounded p-1 flex flex-wrap items-center gap-1 min-h-[34px]"
@@ -324,19 +337,21 @@
     role="list"
   >
     <span class="text-[10px] text-gray-400 px-1">非表示</span>
-    {#each $eventDisplay.hidden as field, idx}
-      <span
-        class="badge badge-sm badge-ghost cursor-grab select-none"
-        class:opacity-30={isFromMe(-1, idx)}
-        draggable="true"
-        ondragstart={(e) => onDragStart(e, { row: -1, idx })}
-        ondragend={onDragEnd}
-        ondragover={(e) => onDragOverItem(e, -1, idx)}
-        ondrop={(e) => onDropItem(e, -1, idx)}
-        role="listitem"
-      >
-        {EVENT_FIELD_LABELS[field]}
-      </span>
+    {#each $store.hidden as field, idx}
+      {#if allowAllDay || field !== 'allDayLabel'}
+        <span
+          class="badge badge-sm badge-ghost cursor-grab select-none"
+          class:opacity-30={isFromMe(-1, idx)}
+          draggable="true"
+          ondragstart={(e) => onDragStart(e, { row: -1, idx })}
+          ondragend={onDragEnd}
+          ondragover={(e) => onDragOverItem(e, -1, idx)}
+          ondrop={(e) => onDropItem(e, -1, idx)}
+          role="listitem"
+        >
+          {EVENT_FIELD_LABELS[field]}
+        </span>
+      {/if}
     {/each}
   </div>
 </div>

@@ -1,11 +1,11 @@
 <script lang="ts">
   import { getWeekdayLabel, isSameDay, getEventsForDay, formatDayLabel, getRangeGridDays, isDayInRange, getCurrentMonthGrid, hasValidRange, buildEventRows } from '$lib/calendar/utils';
-  import type { CalendarEvent, CalendarStyle, EventDisplayConfig, ViewRange } from '$lib/types';
+  import type { CalendarEvent, CalendarStyle, DateRange, EventDisplayConfig } from '$lib/types';
 
   interface Props {
     events: CalendarEvent[];
     style: CalendarStyle;
-    range: ViewRange;
+    range: DateRange;
     displayConfig: EventDisplayConfig;
     oneditEvent: (event: CalendarEvent) => void;
     onclickDay: (date: Date) => void;
@@ -59,7 +59,7 @@
         >
           {#each dayEvents as ev}
             <button
-              class="leading-tight px-0.5 rounded truncate cursor-pointer hover:opacity-80 w-full overflow-hidden text-left shrink-0"
+              class="leading-tight px-0.5 rounded cursor-pointer hover:opacity-80 w-full overflow-hidden text-left shrink-0"
               style="font-size: {style.eventFontSize}px; background-color: {ev.color || style.eventDefaultColor}; color: white;
                 {style.eventSizing === 'equal'
                   ? 'flex: 1 1 0%; shrink: 1;'
@@ -68,7 +68,7 @@
             >
               {#each buildEventRows(ev, displayConfig) as row}
                 <div
-                  class="truncate whitespace-pre"
+                  class="whitespace-pre-wrap break-words"
                   class:font-bold={row.bold}
                   style={row.fontSize !== undefined ? `font-size: ${row.fontSize}px;` : ''}
                 >{row.text}</div>

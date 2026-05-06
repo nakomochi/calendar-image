@@ -4,24 +4,29 @@ import type {
   CalendarStyle,
   ExportSettings,
   ViewType,
-  ViewRange,
+  DateRange,
+  TimeRange,
   EventDisplayConfig,
   TimetableConfig,
 } from './types';
 import {
   DEFAULT_STYLE,
   DEFAULT_EXPORT,
-  DEFAULT_VIEW_RANGE,
+  DEFAULT_DATE_RANGE,
+  DEFAULT_TIME_RANGE,
   DEFAULT_EVENT_DISPLAY,
+  DEFAULT_TIMETABLE_DISPLAY,
 } from './types';
 import { currentOrNextTerm, splitTermKey } from './calendar/timetable';
 
 export const events = writable<CalendarEvent[]>([]);
 export const style = writable<CalendarStyle>({ ...DEFAULT_STYLE });
 export const viewType = writable<ViewType>('grid');
-export const viewRange = writable<ViewRange>({ ...DEFAULT_VIEW_RANGE });
+export const dateRange = writable<DateRange>({ ...DEFAULT_DATE_RANGE });
+export const timeRange = writable<TimeRange>({ ...DEFAULT_TIME_RANGE });
 export const exportSettings = writable<ExportSettings>({ ...DEFAULT_EXPORT });
 export const eventDisplay = writable<EventDisplayConfig>(structuredClone(DEFAULT_EVENT_DISPLAY));
+export const timetableEventDisplay = writable<EventDisplayConfig>(structuredClone(DEFAULT_TIMETABLE_DISPLAY));
 
 export const visibleEvents = derived(events, ($events) =>
   $events.filter((e) => e.visible)
@@ -41,8 +46,8 @@ function buildDefaultTimetableConfig(): TimetableConfig {
   const t = currentOrNextTerm();
   const [semester, part] = splitTermKey(t.key);
   return {
-    showSaturday: true,
-    showPeriod6: true,
+    showSaturday: false,
+    showPeriod6: false,
     termYear: t.year,
     termSemester: semester,
     termPart: part,

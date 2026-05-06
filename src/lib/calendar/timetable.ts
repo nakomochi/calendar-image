@@ -121,7 +121,7 @@ export function buildTimetable(
       }
 
       const courses: Course[] = [];
-      for (const [title, src] of titleGroups) {
+      for (const [groupKey, src] of titleGroups) {
         if (src.length < COURSE_MIN_COUNT || src.length / topCount < COURSE_MIN_RATIO) continue;
         let earliestMs = Infinity;
         let latestMs = -Infinity;
@@ -147,8 +147,8 @@ export function buildTimetable(
         }
         const isoDay = new Date(earliestMs).toISOString().slice(0, 10);
         courses.push({
-          id: `${wd}-${p.index}-${title}-${isoDay}`,
-          title,
+          id: `${wd}-${p.index}-${groupKey}-${isoDay}`,
+          title: latestEvent.title,
           location,
           weekday: wd,
           period: p,

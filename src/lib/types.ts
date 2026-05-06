@@ -33,18 +33,24 @@ export interface CalendarStyle {
   eventFontSize: number;
 }
 
-export interface ViewRange {
+export interface DateRange {
   start: string; // 'YYYY-MM-DD'
   end: string;
   grayout: boolean;
-  startTime: string; // 'HH:mm' (timeline only)
+}
+
+export interface TimeRange {
+  startTime: string; // 'HH:mm'
   endTime: string;
 }
 
-export const DEFAULT_VIEW_RANGE: ViewRange = {
+export const DEFAULT_DATE_RANGE: DateRange = {
   start: '',
   end: '',
   grayout: false,
+};
+
+export const DEFAULT_TIME_RANGE: TimeRange = {
   startTime: '08:00',
   endTime: '22:00',
 };
@@ -91,7 +97,7 @@ export interface TimetableConfig {
   termPart: TermPart;
 }
 
-export type EventField = 'startTime' | 'endTime' | 'title' | 'location' | 'allDayLabel';
+export type EventField = 'startTime' | 'endTime' | 'title' | 'location' | 'description' | 'allDayLabel';
 
 export type RowItem =
   | { type: 'field'; field: EventField }
@@ -123,8 +129,18 @@ export const DEFAULT_EVENT_DISPLAY: EventDisplayConfig = {
       items: [{ type: 'field', field: 'location' }],
     },
   ],
-  hidden: ['endTime', 'allDayLabel'],
+  hidden: ['endTime', 'description', 'allDayLabel'],
   allDayMode: 'label',
+};
+
+// Period times are already in the row header; allDayMode is unused (courses are never all-day).
+export const DEFAULT_TIMETABLE_DISPLAY: EventDisplayConfig = {
+  rows: [
+    { items: [{ type: 'field', field: 'title' }], bold: true },
+    { items: [{ type: 'field', field: 'location' }] },
+  ],
+  hidden: ['startTime', 'endTime', 'description'],
+  allDayMode: 'omit',
 };
 
 export const EVENT_FIELD_LABELS: Record<EventField, string> = {
@@ -132,5 +148,6 @@ export const EVENT_FIELD_LABELS: Record<EventField, string> = {
   endTime: '終了時刻',
   title: 'タイトル',
   location: '場所',
+  description: '説明',
   allDayLabel: '終日ラベル',
 };

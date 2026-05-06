@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { formatDate, parseViewRange, buildEventRows } from '$lib/calendar/utils';
-  import type { CalendarEvent, CalendarStyle, EventDisplayConfig, ViewRange } from '$lib/types';
+  import { formatDate, eventOverlapsRange, buildEventRows } from '$lib/calendar/utils';
+  import type { CalendarEvent, CalendarStyle, DateRange, EventDisplayConfig } from '$lib/types';
 
   interface Props {
     events: CalendarEvent[];
     style: CalendarStyle;
-    range: ViewRange;
+    range: DateRange;
     displayConfig: EventDisplayConfig;
     oneditEvent: (event: CalendarEvent) => void;
   }
@@ -14,15 +14,7 @@
 
   let subFontSize = $derived(Math.max(style.eventFontSize - 2, 8));
 
-  let filteredEvents = $derived.by(() => {
-    const { start, end } = parseViewRange(range);
-    if (!start || !end) return events;
-    return events.filter((e) => {
-      const evStart = new Date(e.start);
-      const evEnd = new Date(e.end);
-      return evStart < end && evEnd > start;
-    });
-  });
+  let filteredEvents = $derived(events.filter((e) => eventOverlapsRange(e, range)));
 
   let sortedEvents = $derived(
     [...filteredEvents].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
@@ -83,9 +75,9 @@
             {#each buildEventRows(ev, displayConfig) as row}
               {@const fs = row.fontSize ?? (row.hasTitle ? style.eventFontSize : subFontSize)}
               {#if row.hasTitle}
-                <div class="truncate whitespace-pre" class:font-bold={row.bold} style="font-size: {fs}px;">{row.text}</div>
+                <div class="whitespace-pre-wrap break-words" class:font-bold={row.bold} style="font-size: {fs}px;">{row.text}</div>
               {:else}
-                <div class="text-gray-400 whitespace-pre-wrap" class:font-bold={row.bold} style="font-size: {fs}px;">{row.text}</div>
+                <div class="text-gray-400 whitespace-pre-wrap break-words" class:font-bold={row.bold} style="font-size: {fs}px;">{row.text}</div>
               {/if}
             {/each}
           </div>
