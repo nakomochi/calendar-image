@@ -88,6 +88,11 @@
     return '';
   }
 
+  function handleSubmitUrl(e: SubmitEvent) {
+    e.preventDefault();
+    loadFromUrl();
+  }
+
   async function loadFromUrl() {
     if (!icsUrl.trim()) return;
     if ($utokyoMode) {
@@ -149,17 +154,17 @@
   <!-- Import -->
   <div class="space-y-2">
     <h3 class="font-bold text-sm">インポート</h3>
-    <div class="flex gap-1">
+    <form class="flex gap-1" onsubmit={handleSubmitUrl}>
       <input
-        type="text"
+        type="url"
         class="input input-bordered input-sm flex-1"
         placeholder={$utokyoMode ? 'u-tokyo.ac.jp の ICS URL' : 'iCS URL'}
         bind:value={icsUrl}
       />
-      <button class="btn btn-primary btn-sm" onclick={loadFromUrl} disabled={loading}>
+      <button type="submit" class="btn btn-primary btn-sm" disabled={loading}>
         {loading ? '...' : '読込'}
       </button>
-    </div>
+    </form>
     <div
       class="border-2 border-dashed rounded-lg p-4 text-center text-xs text-gray-400 cursor-pointer hover:border-primary"
       role="button"

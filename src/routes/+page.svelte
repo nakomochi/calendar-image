@@ -43,16 +43,24 @@
     return buildCellOverview(timetableAllMatrix, sc.weekday, sc.period);
   });
 
-  let lastUtokyoMode: boolean | null = null;
-  $effect(() => {
-    const mode = page.data?.utokyoMode === true;
-    if (mode === lastUtokyoMode) return;
+  // Apply utokyo mode synchronously before the first paint so /utokyo
+  // doesn't flash GridView (default) before switching to TimetableView.
+  function applyUtokyoMode(mode: boolean) {
     utokyoMode.set(mode);
     if (mode) {
       viewType.set('timetable');
     } else {
       viewType.update((v) => (v === 'timetable' ? 'grid' : v));
     }
+  }
+
+  const initialUtokyoMode = page.data?.utokyoMode === true;
+  applyUtokyoMode(initialUtokyoMode);
+  let lastUtokyoMode: boolean = initialUtokyoMode;
+  $effect(() => {
+    const mode = page.data?.utokyoMode === true;
+    if (mode === lastUtokyoMode) return;
+    applyUtokyoMode(mode);
     lastUtokyoMode = mode;
   });
 
