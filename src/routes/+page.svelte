@@ -101,6 +101,9 @@
         <p class="mt-6 text-sm text-base-content/60">
           URL 読み込み対応: Google カレンダー・Outlook・iCloud・東京大学 (u-tokyo.ac.jp)
         </p>
+        <p class="mt-2 text-xs text-base-content/50">
+          ※ PowerPoint・SVG は、Noto Sans JP などのフォントが入っていない環境では代わりのフォントで表示されます。
+        </p>
       </div>
     </section>
 

@@ -19,6 +19,9 @@
   const EXPORT_OPTIONS: { format: ExportFormat; label: string; hint: string }[] = [
     { format: 'png', label: 'PNG', hint: '画像・高画質' },
     { format: 'jpg', label: 'JPG', hint: '画像・軽量' },
+    { format: 'svg', label: 'SVG', hint: 'ベクター (Figma・Illustrator)' },
+    { format: 'pptx', label: 'PowerPoint', hint: '編集できるスライド' },
+    { format: 'html', label: 'HTML', hint: 'Web ページ' },
   ];
 
   const CUSTOM_PRESET = 'custom';
@@ -152,7 +155,7 @@
         {/if}
         書き出し
       </summary>
-      <ul class="menu dropdown-content bg-base-100 rounded-box z-30 mt-1 w-48 p-2 shadow-lg">
+      <ul class="menu dropdown-content bg-base-100 rounded-box z-30 mt-1 w-72 p-2 shadow-lg">
         {#each EXPORT_OPTIONS as opt (opt.format)}
           <li>
             <button type="button" class="flex justify-between" onclick={() => handleExport(opt.format)}>

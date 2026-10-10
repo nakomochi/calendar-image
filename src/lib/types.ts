@@ -78,7 +78,7 @@ export const DEFAULT_TIME_RANGE: TimeRange = {
 
 export type SidebarTab = 'data' | 'layout' | 'design';
 
-export type ExportFormat = 'png' | 'jpg';
+export type ExportFormat = 'png' | 'jpg' | 'svg' | 'pptx' | 'html';
 
 // Output canvas size in CSS pixels. The preview renders at exactly this size.
 export interface ExportSettings {
