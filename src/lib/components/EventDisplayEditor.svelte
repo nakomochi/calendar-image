@@ -7,14 +7,12 @@
   interface Props {
     store: Writable<EventDisplayConfig>;
     defaultConfig: EventDisplayConfig;
-    title?: string;
     // Timetable courses are never all-day, so the all-day UI is suppressed there.
     allowAllDay?: boolean;
-    // Suppress the built-in heading when the parent section already renders one.
-    hideHeading?: boolean;
   }
 
-  let { store, defaultConfig, title = '予定の表示', allowAllDay = true, hideHeading = false }: Props = $props();
+  // The parent section renders the heading.
+  let { store, defaultConfig, allowAllDay = true }: Props = $props();
 
   // row = -1 represents the hidden pool
   type Loc = { row: number; idx: number };
@@ -195,13 +193,9 @@
 </script>
 
 <div class="space-y-2">
-  {#if !hideHeading}
-    <h3 class="font-bold text-sm">{title}</h3>
-  {/if}
-
   {#if allowAllDay}
-    <label class="flex items-center justify-between text-xs">
-      <span>終日の扱い</span>
+    <label class="flex items-center justify-between text-xs gap-2">
+      <span class="shrink-0">終日の扱い</span>
       <select class="select select-bordered select-xs" bind:value={$store.allDayMode}>
         <option value="label">「終日」と表示</option>
         <option value="omit">時間欄を省略</option>

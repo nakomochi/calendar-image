@@ -1,19 +1,18 @@
 import type { ViewType } from '$lib/types';
 
-// Per-view setting sections rendered between Sidebar's always-shown blocks
-// (Import / View Type / Hidden Events / Export). Order in each array is the render order.
-export type SettingModule =
+// Sections shown in the sidebar's Layout tab for each view. Design settings live
+// in the Design tab and apply to every view, so they are not listed here.
+// Order in each array is the render order.
+export type LayoutModule =
   | 'dateRange'
   | 'timeRange'
   | 'timetableConfig'
-  | 'style'
   | 'eventDisplay'
-  | 'timetableEventDisplay'
-  | 'advancedStyle';
+  | 'timetableEventDisplay';
 
-export const VIEW_MODULES: Record<ViewType, ReadonlyArray<SettingModule>> = {
-  grid:      ['dateRange', 'style', 'eventDisplay', 'advancedStyle'],
-  timeline:  ['dateRange', 'timeRange', 'style', 'eventDisplay', 'advancedStyle'],
-  list:      ['dateRange', 'style', 'eventDisplay', 'advancedStyle'],
-  timetable: ['timetableConfig', 'style', 'timetableEventDisplay', 'advancedStyle'],
+export const LAYOUT_MODULES: Record<ViewType, ReadonlyArray<LayoutModule>> = {
+  grid:      ['dateRange', 'eventDisplay'],
+  timeline:  ['dateRange', 'timeRange', 'eventDisplay'],
+  list:      ['dateRange', 'eventDisplay'],
+  timetable: ['timetableConfig', 'timetableEventDisplay'],
 };

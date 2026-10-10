@@ -76,11 +76,31 @@ export const DEFAULT_TIME_RANGE: TimeRange = {
   endTime: '22:00',
 };
 
+export type SidebarTab = 'data' | 'layout' | 'design';
+
+export type ExportFormat = 'png' | 'jpg';
+
+// Output canvas size in CSS pixels. The preview renders at exactly this size.
 export interface ExportSettings {
-  format: 'png' | 'jpg';
   width: number;
   height: number;
 }
+
+export interface SizePreset {
+  id: string;
+  label: string;
+  width: number;
+  height: number;
+}
+
+export const SIZE_PRESETS: SizePreset[] = [
+  { id: 'standard', label: '標準 4:3', width: 1200, height: 900 },
+  { id: 'wide', label: 'スライド 16:9', width: 1600, height: 900 },
+  { id: 'a4-landscape', label: 'A4 横', width: 1123, height: 794 },
+  { id: 'a4-portrait', label: 'A4 縦', width: 794, height: 1123 },
+  { id: 'square', label: '正方形', width: 1080, height: 1080 },
+  { id: 'phone', label: 'スマホ壁紙', width: 390, height: 844 },
+];
 
 export const DEFAULT_STYLE: CalendarStyle = {
   bgColor: '#ffffff',
@@ -109,7 +129,6 @@ export const DEFAULT_STYLE: CalendarStyle = {
 };
 
 export const DEFAULT_EXPORT: ExportSettings = {
-  format: 'png',
   width: 1200,
   height: 900,
 };

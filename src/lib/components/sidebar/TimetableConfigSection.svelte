@@ -32,5 +32,4 @@
     <input type="checkbox" class="checkbox checkbox-xs" bind:checked={$timetableConfig.showPeriod6} />
     <span>6限を表示</span>
   </label>
-  <div class="text-[10px] text-gray-400">マスを右クリックで編集 / 左クリックで詳細</div>
 </div>

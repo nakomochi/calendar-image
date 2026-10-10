@@ -1,29 +1,25 @@
 import { toPng, toJpeg } from 'html-to-image';
-import type { ExportSettings } from '../types';
+import type { ExportFormat, ExportSettings } from '../types';
+import { downloadDataUrl } from './download';
 
 export async function exportToImage(
   element: HTMLElement,
-  settings: ExportSettings
+  size: ExportSettings,
+  format: ExportFormat,
 ): Promise<void> {
   const options = {
-    width: settings.width,
-    height: settings.height,
+    width: size.width,
+    height: size.height,
     style: {
-      width: `${settings.width}px`,
-      height: `${settings.height}px`,
+      width: `${size.width}px`,
+      height: `${size.height}px`,
     },
     pixelRatio: 2,
   };
 
-  let dataUrl: string;
-  if (settings.format === 'jpg') {
-    dataUrl = await toJpeg(element, { ...options, quality: 0.95 });
-  } else {
-    dataUrl = await toPng(element, options);
-  }
+  const dataUrl = format === 'jpg'
+    ? await toJpeg(element, { ...options, quality: 0.95 })
+    : await toPng(element, options);
 
-  const link = document.createElement('a');
-  link.download = `calendar.${settings.format}`;
-  link.href = dataUrl;
-  link.click();
+  downloadDataUrl(dataUrl, `calendar.${format}`);
 }

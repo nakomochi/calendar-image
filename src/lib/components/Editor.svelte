@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import { events, style, viewType, exportSettings, dateRange, timeRange, eventDisplay, timetableEventDisplay, utokyoMode as utokyoModeStore, timetableConfig, patchEvents, themePanelOpen } from '$lib/stores';
+  import { events, style, viewType, exportSettings, dateRange, timeRange, eventDisplay, timetableEventDisplay, utokyoMode as utokyoModeStore, timetableConfig, patchEvents, sidebarTab } from '$lib/stores';
   import { visibleEvents } from '$lib/stores';
   import { getEventsForDay } from '$lib/calendar/utils';
   import GridView from '$lib/components/GridView.svelte';
@@ -11,7 +11,8 @@
   import DayEventsModal from '$lib/components/DayEventsModal.svelte';
   import CellCoursesModal from '$lib/components/CellCoursesModal.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
-  import ThemePanel from '$lib/components/ThemePanel.svelte';
+  import Toolbar from '$lib/components/editor/Toolbar.svelte';
+  import CanvasViewport from '$lib/components/editor/CanvasViewport.svelte';
   import type { CalendarEvent } from '$lib/types';
   import {
     buildCellOverview,
@@ -122,63 +123,84 @@
   <title>{$utokyoModeStore ? '東大カレンダー' : 'Calendar Image Generator'}</title>
 </svelte:head>
 
-<div class="flex h-screen bg-base-300">
-  <Sidebar {calendarEl} onclickDay={handleClickDay} />
-
-  <main class="flex-1 p-6 overflow-auto flex items-center justify-center relative">
-    {#if !$themePanelOpen}
-      <button
-        type="button"
-        class="btn btn-sm btn-primary absolute top-4 right-4 z-30 shadow-md gap-1"
-        onclick={() => themePanelOpen.set(true)}
-        aria-label="テーマを開く"
-      >
-        <span>🎨</span>
-        <span>テーマ</span>
-      </button>
-    {/if}
-    <div
-      bind:this={calendarEl}
-      style="width: {$exportSettings.width}px; height: {$exportSettings.height}px;"
-      class="shadow-lg shrink-0"
-    >
-      {#if $viewType === 'grid'}
-        <GridView
-          events={$visibleEvents}
-          style={$style}
-          range={$dateRange}
-          displayConfig={$eventDisplay}
-          oneditEvent={handleEditEvent}
-          onclickDay={handleClickDay}
-        />
-      {:else if $viewType === 'timeline'}
-        <TimelineView
-          events={$visibleEvents}
-          style={$style}
-          range={$dateRange}
-          timeRange={$timeRange}
-          displayConfig={$eventDisplay}
-          oneditEvent={handleEditEvent}
-        />
-      {:else if $viewType === 'timetable'}
-        <TimetableView
-          matrix={timetableAllMatrix}
-          style={$style}
-          config={$timetableConfig}
-          displayConfig={$timetableEventDisplay}
-          oneditCourse={handleEditCourse}
-          onclickCell={handleClickCell}
-        />
-      {:else}
-        <ListView
-          events={$visibleEvents}
-          style={$style}
-          range={$dateRange}
-          displayConfig={$eventDisplay}
-          oneditEvent={handleEditEvent}
-        />
-      {/if}
+{#snippet emptyState()}
+  <div class="w-full h-full flex items-center justify-center bg-base-300/70 p-6">
+    <div class="card bg-base-100 shadow-xl max-w-sm">
+      <div class="card-body items-center text-center gap-3">
+        <h2 class="card-title text-base">カレンダーを読み込んでください</h2>
+        <p class="text-sm text-base-content/70">
+          {#if $utokyoModeStore}
+            u-tokyo.ac.jp の ICS URL を読み込むと、ここに時間割が表示されます。
+          {:else}
+            ICS の URL か .ics ファイルを読み込むと、ここにプレビューが表示されます。
+          {/if}
+        </p>
+        <button type="button" class="btn btn-primary btn-sm" onclick={() => sidebarTab.set('data')}>
+          データタブを開く
+        </button>
+      </div>
     </div>
+  </div>
+{/snippet}
+
+{#snippet timetableHint()}
+  <p class="text-xs text-base-content/60">マスをクリックで詳細 / 授業を右クリックで編集</p>
+{/snippet}
+
+<div class="flex h-screen bg-base-300">
+  <Sidebar onclickDay={handleClickDay} />
+
+  <main class="flex-1 flex flex-col min-w-0">
+    <Toolbar {calendarEl} />
+    <CanvasViewport
+      width={$exportSettings.width}
+      height={$exportSettings.height}
+      overlay={$events.length === 0 ? emptyState : undefined}
+      footer={$viewType === 'timetable' ? timetableHint : undefined}
+    >
+      <!-- Export target: must stay unscaled at the exact export size. -->
+      <div
+        bind:this={calendarEl}
+        style="width: {$exportSettings.width}px; height: {$exportSettings.height}px;"
+      >
+        {#if $viewType === 'grid'}
+          <GridView
+            events={$visibleEvents}
+            style={$style}
+            range={$dateRange}
+            displayConfig={$eventDisplay}
+            oneditEvent={handleEditEvent}
+            onclickDay={handleClickDay}
+          />
+        {:else if $viewType === 'timeline'}
+          <TimelineView
+            events={$visibleEvents}
+            style={$style}
+            range={$dateRange}
+            timeRange={$timeRange}
+            displayConfig={$eventDisplay}
+            oneditEvent={handleEditEvent}
+          />
+        {:else if $viewType === 'timetable'}
+          <TimetableView
+            matrix={timetableAllMatrix}
+            style={$style}
+            config={$timetableConfig}
+            displayConfig={$timetableEventDisplay}
+            oneditCourse={handleEditCourse}
+            onclickCell={handleClickCell}
+          />
+        {:else}
+          <ListView
+            events={$visibleEvents}
+            style={$style}
+            range={$dateRange}
+            displayConfig={$eventDisplay}
+            oneditEvent={handleEditEvent}
+          />
+        {/if}
+      </div>
+    </CanvasViewport>
   </main>
 </div>
 
@@ -207,5 +229,3 @@
   onsave={handleSaveEvent}
   ontoggleVisibility={handleToggleVisibility}
 />
-
-<ThemePanel open={$themePanelOpen} onclose={() => themePanelOpen.set(false)} />
