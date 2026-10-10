@@ -14,6 +14,19 @@ export type ViewType = 'grid' | 'timeline' | 'list' | 'timetable';
 
 export type EventSizing = 'equal' | 'fixed';
 export type EventAlign = 'start' | 'center';
+export type EventShape = 'fill' | 'outline' | 'left-bar';
+export type HeaderStyle = 'solid' | 'minimal' | 'underline';
+export type BorderStyle = 'solid' | 'dashed' | 'none';
+export type WeekdayFormat = 'ja1' | 'ja-full' | 'en1' | 'en3' | 'en-full';
+// 'traditional' colors the header (and cell date numbers) Sun=red, Sat=blue —
+// the Japanese wall-calendar convention.
+export type WeekendStyle = 'none' | 'traditional';
+// 'bg'    — current: fill the whole cell with todayBgColor
+// 'circle'— wrap the date number in a filled circle (Apple-like)
+// 'bold'  — thicken and recolor just the number
+// 'badge' — append a small "今日" pill next to the number
+export type TodayMarker = 'bg' | 'circle' | 'bold' | 'badge';
+export type DateAlign = 'top-left' | 'top-right' | 'center-large';
 
 export interface CalendarStyle {
   bgColor: string;
@@ -31,6 +44,14 @@ export interface CalendarStyle {
   eventAlign: EventAlign;
   dateFontSize: number;
   eventFontSize: number;
+  eventShape: EventShape;
+  headerStyle: HeaderStyle;
+  borderStyle: BorderStyle;
+  cellGap: number;
+  weekdayFormat: WeekdayFormat;
+  weekendStyle: WeekendStyle;
+  todayMarker: TodayMarker;
+  dateAlign: DateAlign;
 }
 
 export interface DateRange {
@@ -77,6 +98,14 @@ export const DEFAULT_STYLE: CalendarStyle = {
   eventAlign: 'start',
   dateFontSize: 12,
   eventFontSize: 10,
+  eventShape: 'fill',
+  headerStyle: 'solid',
+  borderStyle: 'solid',
+  cellGap: 0,
+  weekdayFormat: 'ja1',
+  weekendStyle: 'none',
+  todayMarker: 'bg',
+  dateAlign: 'top-left',
 };
 
 export const DEFAULT_EXPORT: ExportSettings = {

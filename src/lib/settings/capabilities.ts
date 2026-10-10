@@ -7,14 +7,13 @@ export type SettingModule =
   | 'timeRange'
   | 'timetableConfig'
   | 'style'
-  | 'todayHighlight'
   | 'eventDisplay'
   | 'timetableEventDisplay'
-  | 'eventBlock';
+  | 'advancedStyle';
 
 export const VIEW_MODULES: Record<ViewType, ReadonlyArray<SettingModule>> = {
-  grid:      ['dateRange', 'style', 'todayHighlight', 'eventDisplay', 'eventBlock'],
-  timeline:  ['dateRange', 'timeRange', 'style', 'todayHighlight', 'eventDisplay', 'eventBlock'],
-  list:      ['dateRange', 'style', 'eventDisplay'],
-  timetable: ['timetableConfig', 'style', 'timetableEventDisplay'],
+  grid:      ['dateRange', 'style', 'eventDisplay', 'advancedStyle'],
+  timeline:  ['dateRange', 'timeRange', 'style', 'eventDisplay', 'advancedStyle'],
+  list:      ['dateRange', 'style', 'eventDisplay', 'advancedStyle'],
+  timetable: ['timetableConfig', 'style', 'timetableEventDisplay', 'advancedStyle'],
 };

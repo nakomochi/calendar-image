@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { getWeekdayLabel, getEventsForDay, formatDayLabel, isSameDay, layoutEvents, isDayInRange, getTimeRangeHours, getRangeDays, getWeekDays, hasValidRange, buildEventRows, minutesOfDay } from '$lib/calendar/utils';
+  import { getWeekdayLabel, getEventsForDay, isSameDay, layoutEvents, isDayInRange, getTimeRangeHours, getRangeDays, getWeekDays, hasValidRange, buildEventRows, minutesOfDay } from '$lib/calendar/utils';
+  import { chipCss, headerCss, weekdayAccent, todayCellTint } from '$lib/calendar/styleHelpers';
+  import DateLabel from './DateLabel.svelte';
   import type { CalendarEvent, CalendarStyle, DateRange, EventDisplayConfig, TimeRange } from '$lib/types';
 
   interface Props {
@@ -51,19 +53,21 @@
 >
   <!-- Header -->
   <div class="flex shrink-0">
-    <div class="w-[60px] shrink-0 p-1" style="background-color: {style.headerBgColor}; border-top-left-radius: {style.borderRadius}px;"></div>
+    <div class="w-[60px] shrink-0 p-1" style="{headerCss(style)} border-top-left-radius: {style.borderRadius}px;"></div>
     {#each days as day, i}
       {@const inRange = isDayInRange(day, range)}
       {@const outOfRange = hasValidRange(range) && !inRange}
       {@const isToday = style.highlightToday && isSameDay(day, today)}
+      {@const accent = weekdayAccent(day.getDay(), style)}
       <div
         class="flex-1 text-center text-xs font-bold py-2"
-        style="background-color: {style.headerBgColor}; color: {style.headerTextColor};
+        style="{headerCss(style)}
+          {accent ? `color: ${accent};` : ''}
           opacity: {outOfRange ? 0.3 : 1};
-          {i === days.length - 1 ? `border-top-right-radius: ${style.borderRadius}px` : ''}"
+          {i === days.length - 1 ? `border-top-right-radius: ${style.borderRadius}px;` : ''}"
       >
-        <div>{getWeekdayLabel(day.getDay())}</div>
-        <div style="font-size: {style.dateFontSize}px;" class:underline={isToday}>{formatDayLabel(day, i === 0)}</div>
+        <div>{getWeekdayLabel(day.getDay(), style.weekdayFormat)}</div>
+        <DateLabel {day} isFirstCell={i === 0} {isToday} {style} accent={accent} />
       </div>
     {/each}
   </div>
@@ -85,7 +89,7 @@
           {#each allDayEvents as ev}
             <button
               class="text-left px-1 py-0.5 rounded cursor-pointer hover:opacity-80 overflow-hidden"
-              style="font-size: {style.eventFontSize}px; background-color: {ev.color || style.eventDefaultColor}; color: white;
+              style="font-size: {style.eventFontSize}px; {chipCss(style, ev.color || style.eventDefaultColor)}
                 {style.eventSizing === 'equal'
                   ? 'width: 100%; flex: 1 1 0%;'
                   : `width: 100%; height: ${style.eventFixedSize}px; flex: none;`}"
@@ -124,10 +128,11 @@
       {@const isToday = style.highlightToday && isSameDay(day, today)}
       {@const timedEvents = outOfRange && !showGrayout ? [] : getEventsForDay(events, day).filter((e) => !e.allDay)}
       {@const layouted = layoutEvents(timedEvents)}
+      {@const showTodayCol = isToday && todayCellTint(style)}
       <div
         class="flex-1 relative border-l"
         style="height: {totalHeight}px; border-color: {style.gridLineColor};
-          background-color: {showGrayout ? '#f3f4f6' : isToday ? style.todayBgColor : 'transparent'};
+          background-color: {showGrayout ? '#f3f4f6' : showTodayCol ? style.todayBgColor : 'transparent'};
           opacity: {outOfRange ? 0.3 : 1};"
       >
         <!-- Hour lines -->
@@ -144,7 +149,7 @@
           {@const height = getEventHeight(ev)}
           <button
             class="absolute leading-tight px-1 rounded cursor-pointer hover:opacity-80 z-10 overflow-hidden text-left"
-            style="font-size: {style.eventFontSize}px; background-color: {ev.color || style.eventDefaultColor}; color: white;
+            style="font-size: {style.eventFontSize}px; {chipCss(style, ev.color || style.eventDefaultColor)}
               top: {top}px; height: {height}px;
               left: {(column / totalColumns) * 100}%; width: {100 / totalColumns}%;"
             onclick={() => oneditEvent(ev)}

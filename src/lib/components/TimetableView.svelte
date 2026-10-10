@@ -1,5 +1,6 @@
 <script lang="ts">
   import { buildEventRows, getWeekdayLabel } from '$lib/calendar/utils';
+  import { headerCss, courseCellCss, weekdayAccent } from '$lib/calendar/styleHelpers';
   import {
     PERIODS,
     TIMETABLE_WEEKDAYS,
@@ -39,17 +40,6 @@
     return result;
   });
 
-  let cellBg = $derived(withAlpha(style.eventDefaultColor, 0.14));
-
-  function withAlpha(hex: string, alpha: number): string {
-    const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
-    if (!m) return hex;
-    const r = parseInt(m[1].slice(0, 2), 16);
-    const g = parseInt(m[1].slice(2, 4), 16);
-    const b = parseInt(m[1].slice(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
-
   function handleCourseContextmenu(e: MouseEvent, course: Course) {
     e.preventDefault();
     oneditCourse?.(course);
@@ -66,23 +56,25 @@
   >
     <div
       class="flex items-center justify-center text-xs font-bold"
-      style="background-color: {style.headerBgColor}; color: {style.headerTextColor}; border-top-left-radius: {style.borderRadius}px;"
+      style="{headerCss(style)} border-top-left-radius: {style.borderRadius}px;"
     ></div>
 
     {#each weekdays as wd, i}
+      {@const accent = weekdayAccent(wd, style)}
       <div
         class="flex items-center justify-center text-sm font-bold py-2"
-        style="background-color: {style.headerBgColor}; color: {style.headerTextColor};
+        style="{headerCss(style)}
+          {accent ? `color: ${accent};` : ''}
           {i === weekdays.length - 1 ? `border-top-right-radius: ${style.borderRadius}px;` : ''}"
       >
-        {getWeekdayLabel(wd)}
+        {getWeekdayLabel(wd, style.weekdayFormat)}
       </div>
     {/each}
 
     {#each periods as p, pi}
       <div
         class="flex flex-col items-center justify-center text-center py-1 px-1"
-        style="background-color: {style.headerBgColor}; color: {style.headerTextColor};
+        style="{headerCss(style)}
           {pi === periods.length - 1 ? `border-bottom-left-radius: ${style.borderRadius}px;` : ''}"
       >
         <div class="text-sm font-bold leading-tight">{p.label}</div>
@@ -103,10 +95,11 @@
           onclick={() => onclickCell?.(wd, p)}
         >
           {#each courses as course}
+            {@const courseColor = course.sourceEvents[0]?.color || style.eventDefaultColor}
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
               class="flex-1 flex flex-col items-center justify-center text-center px-1.5 py-1 overflow-hidden"
-              style="background-color: {cellBg};"
+              style={courseCellCss(style, courseColor)}
               oncontextmenu={(e) => handleCourseContextmenu(e, course)}
               title="右クリックで編集"
             >
@@ -117,7 +110,7 @@
                   class:font-bold={row.bold}
                   class:mt-0.5={!row.hasTitle}
                   class:opacity-80={!row.hasTitle}
-                  style="font-size: {fs}px; color: {style.textColor};"
+                  style="font-size: {fs}px;"
                 >{row.text}</div>
               {/each}
             </div>

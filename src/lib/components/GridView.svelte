@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { getWeekdayLabel, isSameDay, getEventsForDay, formatDayLabel, getRangeGridDays, isDayInRange, getCurrentMonthGrid, hasValidRange, buildEventRows } from '$lib/calendar/utils';
+  import { getWeekdayLabel, isSameDay, getEventsForDay, getRangeGridDays, isDayInRange, getCurrentMonthGrid, hasValidRange, buildEventRows } from '$lib/calendar/utils';
+  import { chipCss, headerCss, cellBorderCss, gridContainerCss, usesCellGap, weekdayAccent, todayCellTint } from '$lib/calendar/styleHelpers';
+  import DateLabel from './DateLabel.svelte';
   import type { CalendarEvent, CalendarStyle, DateRange, EventDisplayConfig } from '$lib/types';
 
   interface Props {
@@ -23,17 +25,19 @@
 </script>
 
 <div
-  class="grid grid-cols-7 w-full h-full"
-  style="background-color: {style.bgColor}; color: {style.textColor}; font-family: {style.fontFamily}; border-radius: {style.borderRadius}px; grid-template-rows: auto repeat({rowCount}, 1fr);"
+  class="grid grid-cols-7 w-full h-full overflow-hidden"
+  style="background-color: {usesCellGap(style) ? style.gridLineColor : style.bgColor}; color: {style.textColor}; font-family: {style.fontFamily}; border-radius: {style.borderRadius}px; grid-template-rows: auto repeat({rowCount}, 1fr); {gridContainerCss(style)}"
 >
   {#each Array.from({ length: 7 }) as _, i}
+    {@const accent = weekdayAccent(i, style)}
     <div
       class="text-center text-sm font-bold py-2"
-      style="background-color: {style.headerBgColor}; color: {style.headerTextColor};
-        {i === 0 ? `border-top-left-radius: ${style.borderRadius}px` : ''}
-        {i === 6 ? `border-top-right-radius: ${style.borderRadius}px` : ''}"
+      style="{headerCss(style)}
+        {accent ? `color: ${accent};` : ''}
+        {i === 0 ? `border-top-left-radius: ${style.borderRadius}px;` : ''}
+        {i === 6 ? `border-top-right-radius: ${style.borderRadius}px;` : ''}"
     >
-      {getWeekdayLabel(i)}
+      {getWeekdayLabel(i, style.weekdayFormat)}
     </div>
   {/each}
 
@@ -43,15 +47,17 @@
     {@const showGrayout = outOfRange && range.grayout}
     {@const isToday = style.highlightToday && isSameDay(day, today)}
     {@const dayEvents = outOfRange && !showGrayout ? [] : getEventsForDay(events, day)}
+    {@const showTodayBg = isToday && todayCellTint(style)}
+    {@const dowAccent = weekdayAccent(day.getDay(), style)}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="border overflow-hidden flex flex-col cursor-pointer"
-      style="border-color: {style.gridLineColor};
-        background-color: {showGrayout ? '#f3f4f6' : isToday ? style.todayBgColor : style.bgColor};
+      class="overflow-hidden flex flex-col cursor-pointer"
+      style="{cellBorderCss(style)}
+        background-color: {showGrayout ? '#f3f4f6' : showTodayBg ? style.todayBgColor : style.bgColor};
         opacity: {outOfRange ? 0.3 : 1};"
       onclick={() => onclickDay(day)}
     >
-      <div class="font-medium px-1 pt-0.5 shrink-0" style="font-size: {style.dateFontSize}px;">{formatDayLabel(day, idx === 0)}</div>
+      <DateLabel {day} isFirstCell={idx === 0} {isToday} {style} accent={dowAccent} />
       {#if !outOfRange || showGrayout}
         <div
           class="flex-1 flex flex-col px-0.5 pb-0.5 min-h-0"
@@ -60,7 +66,7 @@
           {#each dayEvents as ev}
             <button
               class="leading-tight px-0.5 rounded cursor-pointer hover:opacity-80 w-full overflow-hidden text-left shrink-0"
-              style="font-size: {style.eventFontSize}px; background-color: {ev.color || style.eventDefaultColor}; color: white;
+              style="font-size: {style.eventFontSize}px; {chipCss(style, ev.color || style.eventDefaultColor)}
                 {style.eventSizing === 'equal'
                   ? 'flex: 1 1 0%; shrink: 1;'
                   : `flex: none; height: ${style.eventFixedSize}px;`}"

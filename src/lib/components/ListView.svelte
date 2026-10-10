@@ -1,5 +1,6 @@
 <script lang="ts">
   import { formatDate, eventOverlapsRange, buildEventRows } from '$lib/calendar/utils';
+  import { headerCss } from '$lib/calendar/styleHelpers';
   import type { CalendarEvent, CalendarStyle, DateRange, EventDisplayConfig } from '$lib/types';
 
   interface Props {
@@ -57,14 +58,14 @@
     <div class="mb-4">
       <div
         class="font-bold px-3 py-2 rounded-t"
-        style="background-color: {style.headerBgColor}; color: {style.headerTextColor}; font-size: {style.dateFontSize}px;"
+        style="{headerCss(style)} font-size: {style.dateFontSize}px;"
       >
         {group.label}
       </div>
       {#each group.events as ev}
         <button
-          class="flex items-start gap-2 w-full text-left px-3 py-2 border-b cursor-pointer hover:bg-black/5"
-          style="border-color: {style.gridLineColor};"
+          class="flex items-start gap-2 w-full text-left px-3 py-2 cursor-pointer hover:bg-black/5"
+          style="{style.borderStyle === 'none' ? '' : `border-bottom: 1px ${style.borderStyle} ${style.gridLineColor};`}"
           onclick={() => oneditEvent(ev)}
         >
           <div

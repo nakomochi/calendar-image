@@ -38,6 +38,10 @@ export const hiddenEvents = derived(events, ($events) =>
 
 export const utokyoMode = writable<boolean>(false);
 
+// Right-side theme panel — kept in a store so the sidebar can open it from
+// anywhere without threading callbacks through view-specific section wrappers.
+export const themePanelOpen = writable<boolean>(false);
+
 export function patchEvents(ids: ReadonlySet<string>, patch: Partial<CalendarEvent>) {
   events.update((evts) => evts.map((e) => (ids.has(e.id) ? { ...e, ...patch } : e)));
 }

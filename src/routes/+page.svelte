@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { events, style, viewType, exportSettings, dateRange, timeRange, eventDisplay, timetableEventDisplay, utokyoMode, timetableConfig, patchEvents } from '$lib/stores';
+  import { events, style, viewType, exportSettings, dateRange, timeRange, eventDisplay, timetableEventDisplay, utokyoMode, timetableConfig, patchEvents, themePanelOpen } from '$lib/stores';
   import { visibleEvents } from '$lib/stores';
   import { getEventsForDay } from '$lib/calendar/utils';
   import GridView from '$lib/components/GridView.svelte';
@@ -11,6 +11,7 @@
   import DayEventsModal from '$lib/components/DayEventsModal.svelte';
   import CellCoursesModal from '$lib/components/CellCoursesModal.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
+  import ThemePanel from '$lib/components/ThemePanel.svelte';
   import type { CalendarEvent } from '$lib/types';
   import {
     buildCellOverview,
@@ -128,7 +129,18 @@
 <div class="flex h-screen bg-base-300">
   <Sidebar {calendarEl} onclickDay={handleClickDay} />
 
-  <main class="flex-1 p-6 overflow-auto flex items-center justify-center">
+  <main class="flex-1 p-6 overflow-auto flex items-center justify-center relative">
+    {#if !$themePanelOpen}
+      <button
+        type="button"
+        class="btn btn-sm btn-primary absolute top-4 right-4 z-30 shadow-md gap-1"
+        onclick={() => themePanelOpen.set(true)}
+        aria-label="テーマを開く"
+      >
+        <span>🎨</span>
+        <span>テーマ</span>
+      </button>
+    {/if}
     <div
       bind:this={calendarEl}
       style="width: {$exportSettings.width}px; height: {$exportSettings.height}px;"
@@ -199,3 +211,5 @@
   onsave={handleSaveEvent}
   ontoggleVisibility={handleToggleVisibility}
 />
+
+<ThemePanel open={$themePanelOpen} onclose={() => themePanelOpen.set(false)} />

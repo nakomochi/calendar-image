@@ -1,4 +1,4 @@
-import type { CalendarEvent, DateRange, EventDisplayConfig, EventField, TimeRange } from '../types';
+import type { CalendarEvent, DateRange, EventDisplayConfig, EventField, TimeRange, WeekdayFormat } from '../types';
 
 export function getMonthDays(year: number, month: number): Date[] {
   const first = new Date(year, month, 1);
@@ -89,10 +89,16 @@ export function formatDayLabel(day: Date, isFirstCell: boolean): string {
   return `${day.getDate()}`;
 }
 
-const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
+const WEEKDAY_LABELS: Record<WeekdayFormat, readonly string[]> = {
+  'ja1': ['日', '月', '火', '水', '木', '金', '土'],
+  'ja-full': ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'],
+  'en1': ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+  'en3': ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+  'en-full': ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+};
 
-export function getWeekdayLabel(index: number): string {
-  return WEEKDAY_LABELS[index];
+export function getWeekdayLabel(index: number, format: WeekdayFormat = 'ja1'): string {
+  return WEEKDAY_LABELS[format][index];
 }
 
 export function getHourLabels(): string[] {

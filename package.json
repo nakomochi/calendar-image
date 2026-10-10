@@ -1,5 +1,5 @@
 {
-	"name": "calender-image",
+	"name": "calendar-image",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -7,6 +7,7 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
+		"deploy": "vite build && wrangler deploy",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"

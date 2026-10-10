@@ -10,9 +10,11 @@
     title?: string;
     // Timetable courses are never all-day, so the all-day UI is suppressed there.
     allowAllDay?: boolean;
+    // Suppress the built-in heading when the parent section already renders one.
+    hideHeading?: boolean;
   }
 
-  let { store, defaultConfig, title = '予定の表示', allowAllDay = true }: Props = $props();
+  let { store, defaultConfig, title = '予定の表示', allowAllDay = true, hideHeading = false }: Props = $props();
 
   // row = -1 represents the hidden pool
   type Loc = { row: number; idx: number };
@@ -193,7 +195,9 @@
 </script>
 
 <div class="space-y-2">
-  <h3 class="font-bold text-sm">{title}</h3>
+  {#if !hideHeading}
+    <h3 class="font-bold text-sm">{title}</h3>
+  {/if}
 
   {#if allowAllDay}
     <label class="flex items-center justify-between text-xs">

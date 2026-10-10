@@ -10,10 +10,9 @@
   import TimeRangeSection from './sidebar/TimeRangeSection.svelte';
   import TimetableConfigSection from './sidebar/TimetableConfigSection.svelte';
   import StyleSection from './sidebar/StyleSection.svelte';
-  import TodayHighlightSection from './sidebar/TodayHighlightSection.svelte';
   import EventDisplaySection from './sidebar/EventDisplaySection.svelte';
   import TimetableEventDisplaySection from './sidebar/TimetableEventDisplaySection.svelte';
-  import EventBlockSection from './sidebar/EventBlockSection.svelte';
+  import AdvancedStyleSection from './sidebar/AdvancedStyleSection.svelte';
   import ExportSection from './sidebar/ExportSection.svelte';
 
   const SECTION_COMPONENT: Record<SettingModule, Component> = {
@@ -21,10 +20,9 @@
     timeRange: TimeRangeSection,
     timetableConfig: TimetableConfigSection,
     style: StyleSection,
-    todayHighlight: TodayHighlightSection,
     eventDisplay: EventDisplaySection,
     timetableEventDisplay: TimetableEventDisplaySection,
-    eventBlock: EventBlockSection,
+    advancedStyle: AdvancedStyleSection,
   };
 
   let hiddenOpen = $state(false);
