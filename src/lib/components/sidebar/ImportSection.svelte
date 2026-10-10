@@ -3,6 +3,13 @@
   import { parseICS, fetchICS } from '$lib/ical/parser';
   import { isHostAllowed, UTOKYO_HOSTS } from '$lib/ical/hosts';
 
+  interface Props {
+    // Called after events were replaced by a successful import.
+    onloaded?: () => void;
+  }
+
+  let { onloaded }: Props = $props();
+
   const FILE_INPUT_ID = 'ics-file-input';
 
   let icsUrl = $state('');
@@ -34,6 +41,7 @@
     const parsed = parseICS(text);
     events.set(parsed);
     loadedCount = parsed.length;
+    onloaded?.();
   }
 
   function handleSubmitUrl(e: SubmitEvent) {

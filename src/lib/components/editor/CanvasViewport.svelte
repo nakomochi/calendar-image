@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { previewFit } from '$lib/stores';
+  import { desktop } from '$lib/media.svelte';
 
   interface Props {
     // Unscaled canvas size (= export size).
@@ -14,20 +15,21 @@
 
   let { width, height, children, overlay, footer }: Props = $props();
 
-  // Matches the container's p-6 on both sides.
-  const PADDING = 48;
   const FOOTER_RESERVE = 32;
 
   let viewportWidth = $state(0);
   let viewportHeight = $state(0);
+
+  // Container padding on both sides: p-6 on desktop, p-3 on mobile.
+  let padding = $derived(desktop.current ? 48 : 24);
 
   let scale = $derived.by(() => {
     if (!$previewFit) return 1;
     const reserve = footer ? FOOTER_RESERVE : 0;
     const s = Math.min(
       1,
-      (viewportWidth - PADDING) / width,
-      (viewportHeight - PADDING - reserve) / height,
+      (viewportWidth - padding) / width,
+      (viewportHeight - padding - reserve) / height,
     );
     return Number.isFinite(s) && s > 0 ? s : 1;
   });
@@ -36,7 +38,7 @@
 <div class="relative flex-1 min-h-0">
   <!-- m-auto (not justify-center) keeps oversized content scrollable from its top-left edge. -->
   <div
-    class="absolute inset-0 overflow-auto flex p-6"
+    class={['absolute inset-0 overflow-auto flex', desktop.current ? 'p-6' : 'p-3']}
     bind:clientWidth={viewportWidth}
     bind:clientHeight={viewportHeight}
   >

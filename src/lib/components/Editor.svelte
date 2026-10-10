@@ -1,7 +1,9 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import { events, style, viewType, exportSettings, dateRange, timeRange, eventDisplay, timetableEventDisplay, utokyoMode as utokyoModeStore, timetableConfig, patchEvents, sidebarTab } from '$lib/stores';
+  import { get } from 'svelte/store';
+  import { events, style, viewType, viewTypeByMode, exportSettings, dateRange, timeRange, eventDisplay, timetableEventDisplay, utokyoMode as utokyoModeStore, timetableConfig, patchEvents, openSidebarTab, type EditorMode } from '$lib/stores';
   import { visibleEvents } from '$lib/stores';
+  import { desktop } from '$lib/media.svelte';
   import { getEventsForDay } from '$lib/calendar/utils';
   import GridView from '$lib/components/GridView.svelte';
   import TimelineView from '$lib/components/TimelineView.svelte';
@@ -11,6 +13,7 @@
   import DayEventsModal from '$lib/components/DayEventsModal.svelte';
   import CellCoursesModal from '$lib/components/CellCoursesModal.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
+  import MobileSheet from '$lib/components/editor/MobileSheet.svelte';
   import Toolbar from '$lib/components/editor/Toolbar.svelte';
   import CanvasViewport from '$lib/components/editor/CanvasViewport.svelte';
   import type { CalendarEvent } from '$lib/types';
@@ -48,19 +51,20 @@
     return buildCellOverview(timetableAllMatrix, sc.weekday, sc.period);
   });
 
-  // Apply utokyo mode synchronously before the first paint so the timetable
-  // route doesn't flash GridView (default) before switching to TimetableView.
-  // Each route mounts its own Editor, so applying once at init is enough.
-  function applyUtokyoMode(mode: boolean) {
-    utokyoModeStore.set(mode);
-    if (mode) {
-      viewType.set('timetable');
-    } else {
-      viewType.update((v) => (v === 'timetable' ? 'grid' : v));
-    }
-  }
+  // Each route mounts its own Editor and remembers its own view. Restore it
+  // synchronously before the first paint so the wrong view never flashes.
+  const mode: EditorMode = untrack(() => utokyoMode) ? 'utokyo' : 'editor';
+  utokyoModeStore.set(mode === 'utokyo');
+  viewType.set(get(viewTypeByMode)[mode]);
 
-  applyUtokyoMode(untrack(() => utokyoMode));
+  $effect(() => {
+    const current = $viewType;
+    if (get(viewTypeByMode)[mode] === current) return;
+    viewTypeByMode.update((prefs) => ({ ...prefs, [mode]: current }));
+  });
+
+  // First-time mobile users land on the import UI.
+  if (!desktop.current && get(events).length === 0) openSidebarTab('data');
 
   let selectedDayEvents = $derived(
     selectedDay ? getEventsForDay($events, selectedDay) : []
@@ -135,7 +139,7 @@
             ICS の URL か .ics ファイルを読み込むと、ここにプレビューが表示されます。
           {/if}
         </p>
-        <button type="button" class="btn btn-primary btn-sm" onclick={() => sidebarTab.set('data')}>
+        <button type="button" class="btn btn-primary btn-sm" onclick={() => openSidebarTab('data')}>
           データタブを開く
         </button>
       </div>
@@ -144,13 +148,19 @@
 {/snippet}
 
 {#snippet timetableHint()}
-  <p class="text-xs text-base-content/60">マスをクリックで詳細 / 授業を右クリックで編集</p>
+  <p class="text-xs text-base-content/60">
+    {desktop.current ? 'マスをクリックで詳細 / 授業を右クリックで編集' : 'マスをタップで詳細・編集'}
+  </p>
 {/snippet}
 
-<div class="flex h-screen bg-base-300">
-  <Sidebar onclickDay={handleClickDay} />
+<!-- Desktop: sidebar | main. Mobile: main (toolbar + canvas) above the settings sheet and tab bar.
+     Only one variant is mounted since the sidebar content holds state and fixed ids. -->
+<div class={['flex h-dvh bg-base-300', !desktop.current && 'flex-col']}>
+  {#if desktop.current}
+    <Sidebar onclickDay={handleClickDay} />
+  {/if}
 
-  <main class="flex-1 flex flex-col min-w-0">
+  <main class="flex-1 flex flex-col min-w-0 min-h-0">
     <Toolbar {calendarEl} />
     <CanvasViewport
       width={$exportSettings.width}
@@ -202,6 +212,10 @@
       </div>
     </CanvasViewport>
   </main>
+
+  {#if !desktop.current}
+    <MobileSheet onclickDay={handleClickDay} />
+  {/if}
 </div>
 
 <DayEventsModal

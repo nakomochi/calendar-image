@@ -23,8 +23,21 @@ import { persisted, isPlainObject } from './persist';
 
 const VIEW_TYPES: ReadonlyArray<ViewType> = ['grid', 'timeline', 'list', 'timetable'];
 
-function validateViewType(_initial: ViewType, saved: unknown): ViewType | null {
-  return VIEW_TYPES.includes(saved as ViewType) ? (saved as ViewType) : null;
+// Each editor route remembers its own view; the generic editor has no timetable view.
+export type EditorMode = 'editor' | 'utokyo';
+export type ViewTypeByMode = Record<EditorMode, ViewType>;
+
+function isViewType(v: unknown): v is ViewType {
+  return VIEW_TYPES.includes(v as ViewType);
+}
+
+function validateViewTypeByMode(initial: ViewTypeByMode, saved: unknown): ViewTypeByMode | null {
+  if (!isPlainObject(saved)) return null;
+  const { editor, utokyo } = saved;
+  return {
+    editor: isViewType(editor) && editor !== 'timetable' ? editor : initial.editor,
+    utokyo: isViewType(utokyo) ? utokyo : initial.utokyo,
+  };
 }
 
 // Rows/hidden are replaced wholesale (no shallow merge) since a partial config
@@ -40,7 +53,11 @@ function validateEventDisplay(_initial: EventDisplayConfig, saved: unknown): Eve
 // Persisted user preferences (localStorage). Event data, date range, timetable
 // term and the ICS URL are intentionally session-only.
 export const style = persisted<CalendarStyle>('style', { ...DEFAULT_STYLE });
-export const viewType = persisted<ViewType>('viewType', 'grid', { merge: validateViewType });
+export const viewTypeByMode = persisted<ViewTypeByMode>(
+  'viewTypeByMode',
+  { editor: 'grid', utokyo: 'timetable' },
+  { merge: validateViewTypeByMode },
+);
 export const timeRange = persisted<TimeRange>('timeRange', { ...DEFAULT_TIME_RANGE });
 export const exportSettings = persisted<ExportSettings>('exportSize', { ...DEFAULT_EXPORT });
 export const eventDisplay = persisted<EventDisplayConfig>(
@@ -66,10 +83,19 @@ export const hiddenEvents = derived(events, ($events) =>
 );
 
 export const utokyoMode = writable<boolean>(false);
+// Active view of the mounted editor; Editor seeds it from and syncs it to viewTypeByMode.
+export const viewType = writable<ViewType>('grid');
 
 // Kept in stores so the canvas empty state and toolbar can drive the sidebar/preview.
 export const sidebarTab = writable<SidebarTab>('data');
+// Mobile only: whether the settings bottom sheet is expanded.
+export const sheetOpen = writable<boolean>(false);
 export const previewFit = writable<boolean>(true);
+
+export function openSidebarTab(tab: SidebarTab) {
+  sidebarTab.set(tab);
+  sheetOpen.set(true);
+}
 
 export function patchEvents(ids: ReadonlySet<string>, patch: Partial<CalendarEvent>) {
   events.update((evts) => evts.map((e) => (ids.has(e.id) ? { ...e, ...patch } : e)));

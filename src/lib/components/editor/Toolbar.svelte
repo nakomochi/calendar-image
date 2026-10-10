@@ -2,6 +2,8 @@
   import { viewType, utokyoMode, exportSettings, previewFit } from '$lib/stores';
   import { SIZE_PRESETS, type ExportFormat, type ExportSettings, type ViewType } from '$lib/types';
   import { exportCalendar } from '$lib/export';
+  import { desktop } from '$lib/media.svelte';
+  import Brand from './Brand.svelte';
 
   interface Props {
     calendarEl: HTMLElement | null;
@@ -78,7 +80,8 @@
 
 <svelte:document onclick={closeMenuOnOutsideClick} />
 
-<div class="bg-base-100 border-b border-base-300 px-3 py-2 flex items-center gap-3 flex-wrap shrink-0">
+<!-- Pieces are snippets so the desktop and mobile layouts arrange the same controls. -->
+{#snippet canvasControls()}
   <div class="join" role="group" aria-label="表示形式">
     {#each viewOptions as opt (opt.value)}
       <button
@@ -143,28 +146,56 @@
       100%
     </button>
   </div>
+{/snippet}
 
-  <div class="ml-auto flex items-center gap-2">
-    {#if error}
-      <span class="text-error text-xs">{error}</span>
-    {/if}
-    <details class="dropdown dropdown-end" bind:this={exportMenu}>
-      <summary class="btn btn-primary btn-sm" class:btn-disabled={busy || !calendarEl}>
-        {#if busy}
-          <span class="loading loading-spinner loading-xs"></span>
-        {/if}
-        書き出し
-      </summary>
-      <ul class="menu dropdown-content bg-base-100 rounded-box z-30 mt-1 w-72 p-2 shadow-lg">
-        {#each EXPORT_OPTIONS as opt (opt.format)}
-          <li>
-            <button type="button" class="flex justify-between" onclick={() => handleExport(opt.format)}>
-              <span class="font-bold">{opt.label}</span>
-              <span class="text-xs text-base-content/60">{opt.hint}</span>
-            </button>
-          </li>
-        {/each}
-      </ul>
-    </details>
+{#snippet exportError()}
+  {#if error}
+    <span class="text-error text-xs">{error}</span>
+  {/if}
+{/snippet}
+
+{#snippet exportDropdown()}
+  <details class="dropdown dropdown-end" bind:this={exportMenu}>
+    <summary class="btn btn-primary btn-sm" class:btn-disabled={busy || !calendarEl}>
+      {#if busy}
+        <span class="loading loading-spinner loading-xs"></span>
+      {/if}
+      書き出し
+    </summary>
+    <ul class="menu dropdown-content bg-base-100 rounded-box z-30 mt-1 w-72 p-2 shadow-lg">
+      {#each EXPORT_OPTIONS as opt (opt.format)}
+        <li>
+          <button type="button" class="flex justify-between" onclick={() => handleExport(opt.format)}>
+            <span class="font-bold">{opt.label}</span>
+            <span class="text-xs text-base-content/60">{opt.hint}</span>
+          </button>
+        </li>
+      {/each}
+    </ul>
+  </details>
+{/snippet}
+
+{#if desktop.current}
+  <div class="bg-base-100 border-b border-base-300 px-3 py-2 flex items-center gap-3 flex-wrap shrink-0">
+    {@render canvasControls()}
+
+    <div class="ml-auto flex items-center gap-2">
+      {@render exportError()}
+      {@render exportDropdown()}
+    </div>
   </div>
-</div>
+{:else}
+  <!-- Mobile: brand + export on top, canvas controls in one horizontally scrolling row. -->
+  <div class="bg-base-100 border-b border-base-300 shrink-0">
+    <div class="px-3 pt-2 flex items-center justify-between gap-2">
+      <Brand />
+      {@render exportDropdown()}
+    </div>
+    {#if error}
+      <div class="px-3 pt-1">{@render exportError()}</div>
+    {/if}
+    <div class="px-3 py-2 flex items-center gap-3 flex-nowrap overflow-x-auto [scrollbar-width:none] *:shrink-0">
+      {@render canvasControls()}
+    </div>
+  </div>
+{/if}

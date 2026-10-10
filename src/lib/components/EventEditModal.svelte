@@ -67,7 +67,7 @@
 
         <div class="form-control w-full">
           <div class="label"><span class="label-text">色</span></div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <input type="color" class="w-12 h-10 cursor-pointer rounded" bind:value={editColor} />
             {#each usedColors as c}
               <button

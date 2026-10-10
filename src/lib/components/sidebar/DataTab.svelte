@@ -5,12 +5,13 @@
 
   interface Props {
     onclickDay: (date: Date) => void;
+    onloaded?: () => void;
   }
 
-  let { onclickDay }: Props = $props();
+  let { onclickDay, onloaded }: Props = $props();
 </script>
 
-<ImportSection />
+<ImportSection {onloaded} />
 
 {#if $events.length > 0}
   <p class="text-xs text-gray-500">全 {$events.length} 件 / 非表示 {$hiddenEvents.length} 件</p>
