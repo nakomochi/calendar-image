@@ -178,6 +178,9 @@
     {#if error}
       <div class="text-error text-xs">{error}</div>
     {/if}
+    <p class="text-[10px] text-gray-400 leading-relaxed">
+      URL から読み込む場合は Cloudflare Workers で中継しますが、URL や予定の内容は保存・記録しません。URL はリクエスト本文で送るため、アクセスログやキャッシュにも残りません。ファイルを選んだ場合、データは外部に送信されません。
+    </p>
   </div>
 
   <!-- View Type -->

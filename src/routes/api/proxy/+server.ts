@@ -4,10 +4,27 @@ import { ALLOWED_HOSTS, UTOKYO_HOSTS, isHostAllowed } from '$lib/ical/hosts';
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const FETCH_TIMEOUT = 10_000; // 10s
 
-export const GET: RequestHandler = async ({ url }) => {
-  const target = url.searchParams.get('url');
-  if (!target) {
-    return new Response('Missing url parameter', { status: 400 });
+interface ProxyRequestBody {
+  url?: unknown;
+  strict?: unknown;
+}
+
+export const POST: RequestHandler = async ({ request, url }) => {
+  const origin = request.headers.get('origin');
+  if (origin && origin !== url.origin) {
+    return new Response('Forbidden origin', { status: 403 });
+  }
+
+  let payload: ProxyRequestBody;
+  try {
+    payload = await request.json();
+  } catch {
+    return new Response('Invalid JSON body', { status: 400 });
+  }
+
+  const target = payload?.url;
+  if (typeof target !== 'string' || !target) {
+    return new Response('Missing url', { status: 400 });
   }
 
   let parsed: URL;
@@ -21,7 +38,7 @@ export const GET: RequestHandler = async ({ url }) => {
     return new Response('Only HTTPS URLs are allowed', { status: 400 });
   }
 
-  const allowed = url.searchParams.get('strict') === 'utokyo' ? UTOKYO_HOSTS : ALLOWED_HOSTS;
+  const allowed = payload.strict === 'utokyo' ? UTOKYO_HOSTS : ALLOWED_HOSTS;
   if (!isHostAllowed(parsed.hostname, allowed)) {
     return new Response(`Host not allowed: ${parsed.hostname}`, { status: 403 });
   }
@@ -62,13 +79,13 @@ export const GET: RequestHandler = async ({ url }) => {
     return new Response(body, {
       headers: {
         'Content-Type': 'text/calendar; charset=utf-8',
-        'Cache-Control': 'public, max-age=300',
+        'Cache-Control': 'no-store',
       },
     });
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') {
       return new Response('Request timed out', { status: 504 });
     }
-    return new Response(`Fetch error: ${e}`, { status: 502 });
+    return new Response('Failed to fetch calendar', { status: 502 });
   }
 };

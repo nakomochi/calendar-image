@@ -49,18 +49,17 @@ export async function fetchICS(
   proxyBase?: string,
   opts?: FetchICSOptions,
 ): Promise<string> {
-  let fetchUrl: string;
-  if (proxyBase) {
-    const params = new URLSearchParams({ url });
-    if (opts?.strict) params.set('strict', opts.strict);
-    fetchUrl = `${proxyBase}?${params.toString()}`;
-  } else {
-    fetchUrl = url;
-  }
+  const res = proxyBase
+    ? await fetch(proxyBase, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, ...(opts?.strict ? { strict: opts.strict } : {}) }),
+      })
+    : await fetch(url);
 
-  const res = await fetch(fetchUrl);
   if (!res.ok) {
-    throw new Error(`Failed to fetch ICS: ${res.status} ${res.statusText}`);
+    const text = await res.text().catch(() => '');
+    throw new Error(`読み込みに失敗しました (${res.status}): ${text || res.statusText}`);
   }
   return res.text();
 }
