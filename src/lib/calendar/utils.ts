@@ -55,6 +55,13 @@ export function getEventsForDay(events: CalendarEvent[], date: Date): CalendarEv
   });
 }
 
+// Ids of events titled `title` (compared trimmed). Untitled events never match.
+export function eventIdsWithTitle(events: CalendarEvent[], title: string): Set<string> {
+  const key = title.trim();
+  if (!key) return new Set();
+  return new Set(events.filter((e) => e.title.trim() === key).map((e) => e.id));
+}
+
 export function getEventsForWeek(events: CalendarEvent[], weekStart: Date): CalendarEvent[] {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 7);

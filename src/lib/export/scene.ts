@@ -3,7 +3,7 @@
 //
 // Supported: background colors, per-side solid/dashed/dotted borders, per-corner
 // radii, opacity, overflow clipping (incl. rounded clip corners) and text as
-// laid out by the browser. Approximated: gradients (first color stop only).
+// laid out by the browser (incl. letter spacing). Approximated: gradients (first color stop only).
 // Ignored: box-shadow, background images, transforms below the root, inline SVG.
 import { firstGradientColor, toSceneColor, type SceneColor } from './color';
 
@@ -60,6 +60,7 @@ export interface SceneText {
   italic: boolean;
   color: SceneColor;
   lineHeight: number; // px distance between successive line tops
+  letterSpacing: number; // px added after each character, 0 for normal
   align: 'left' | 'center' | 'right';
 }
 
@@ -393,6 +394,7 @@ export function buildScene(root: HTMLElement): Scene {
       italic: cs.fontStyle === 'italic' || cs.fontStyle.startsWith('oblique'),
       color,
       lineHeight,
+      letterSpacing: px(cs.letterSpacing),
       align: textAlign(cs.textAlign),
     };
   }

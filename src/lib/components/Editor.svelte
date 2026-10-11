@@ -1,15 +1,16 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { get } from 'svelte/store';
-  import { events, style, viewType, viewTypeByMode, exportSettings, dateRange, timeRange, eventDisplay, timetableEventDisplay, utokyoMode as utokyoModeStore, timetableConfig, patchEvents, openSidebarTab, type EditorMode } from '$lib/stores';
+  import { events, style, viewType, viewTypeByMode, exportSettings, dateRange, timeRange, eventDisplay, timetableEventDisplay, utokyoMode as utokyoModeStore, timetableConfig, timetableMatrix, annotations, legendItems, patchEvents, openSidebarTab, type EditorMode } from '$lib/stores';
   import { visibleEvents } from '$lib/stores';
   import { desktop } from '$lib/media.svelte';
-  import { getEventsForDay } from '$lib/calendar/utils';
+  import { eventIdsWithTitle, getEventsForDay } from '$lib/calendar/utils';
+  import CalendarFrame from '$lib/components/CalendarFrame.svelte';
   import GridView from '$lib/components/GridView.svelte';
   import TimelineView from '$lib/components/TimelineView.svelte';
   import ListView from '$lib/components/ListView.svelte';
   import TimetableView from '$lib/components/TimetableView.svelte';
-  import EventEditModal from '$lib/components/EventEditModal.svelte';
+  import EventEditModal, { type EventSaveOptions } from '$lib/components/EventEditModal.svelte';
   import DayEventsModal from '$lib/components/DayEventsModal.svelte';
   import CellCoursesModal from '$lib/components/CellCoursesModal.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
@@ -19,9 +20,7 @@
   import type { CalendarEvent } from '$lib/types';
   import {
     buildCellOverview,
-    buildTimetable,
-    filterEventsByTerm,
-    joinTermKey,
+    isCourseVisible,
     type CellOverview,
     type Course,
     type Period,
@@ -37,18 +36,16 @@
   let selectedDay: Date | null = $state(null);
   let selectedCell: { weekday: TimetableWeekday; period: Period } | null = $state(null);
 
-  let activeTermSpec = $derived({
-    year: $timetableConfig.termYear,
-    key: joinTermKey($timetableConfig.termSemester, $timetableConfig.termPart),
-  });
-
-  let timetableAllEvents = $derived(filterEventsByTerm($events, activeTermSpec));
-  let timetableAllMatrix = $derived(buildTimetable(timetableAllEvents));
-
   let cellOverview: CellOverview | null = $derived.by(() => {
     const sc = selectedCell;
     if (!sc) return null;
-    return buildCellOverview(timetableAllMatrix, sc.weekday, sc.period);
+    return buildCellOverview($timetableMatrix, sc.weekday, sc.period);
+  });
+
+  // Courses already save to all their source events, so the bulk option is for single events only.
+  let sameTitleIds = $derived.by(() => {
+    const ev = editingEvent;
+    return ev && !editingCourse ? eventIdsWithTitle($events, ev.title) : new Set<string>();
   });
 
   // Each route mounts its own Editor and remembers its own view. Restore it
@@ -93,11 +90,10 @@
   }
 
   function handleToggleCourse(course: Course) {
-    const next = course.sourceEvents.every((e) => !e.visible);
-    patchCourseEvents(course, { visible: next });
+    patchCourseEvents(course, { visible: !isCourseVisible(course) });
   }
 
-  function handleSaveEvent(updated: CalendarEvent) {
+  function handleSaveEvent(updated: CalendarEvent, { applyToSameTitle }: EventSaveOptions) {
     if (editingCourse) {
       patchCourseEvents(editingCourse, {
         title: updated.title,
@@ -108,12 +104,12 @@
       return;
     }
     patchEvents(new Set([updated.id]), updated);
+    if (applyToSameTitle) patchEvents(sameTitleIds, { title: updated.title, color: updated.color });
   }
 
   function handleToggleVisibility(id: string) {
     if (editingCourse) {
-      const next = editingCourse.sourceEvents.every((e) => !e.visible);
-      patchCourseEvents(editingCourse, { visible: next });
+      patchCourseEvents(editingCourse, { visible: !isCourseVisible(editingCourse) });
       return;
     }
     const target = $events.find((e) => e.id === id);
@@ -173,42 +169,44 @@
         bind:this={calendarEl}
         style="width: {$exportSettings.width}px; height: {$exportSettings.height}px;"
       >
-        {#if $viewType === 'grid'}
-          <GridView
-            events={$visibleEvents}
-            style={$style}
-            range={$dateRange}
-            displayConfig={$eventDisplay}
-            oneditEvent={handleEditEvent}
-            onclickDay={handleClickDay}
-          />
-        {:else if $viewType === 'timeline'}
-          <TimelineView
-            events={$visibleEvents}
-            style={$style}
-            range={$dateRange}
-            timeRange={$timeRange}
-            displayConfig={$eventDisplay}
-            oneditEvent={handleEditEvent}
-          />
-        {:else if $viewType === 'timetable'}
-          <TimetableView
-            matrix={timetableAllMatrix}
-            style={$style}
-            config={$timetableConfig}
-            displayConfig={$timetableEventDisplay}
-            oneditCourse={handleEditCourse}
-            onclickCell={handleClickCell}
-          />
-        {:else}
-          <ListView
-            events={$visibleEvents}
-            style={$style}
-            range={$dateRange}
-            displayConfig={$eventDisplay}
-            oneditEvent={handleEditEvent}
-          />
-        {/if}
+        <CalendarFrame style={$style} annotations={$annotations} legend={$legendItems}>
+          {#if $viewType === 'grid'}
+            <GridView
+              events={$visibleEvents}
+              style={$style}
+              range={$dateRange}
+              displayConfig={$eventDisplay}
+              oneditEvent={handleEditEvent}
+              onclickDay={handleClickDay}
+            />
+          {:else if $viewType === 'timeline'}
+            <TimelineView
+              events={$visibleEvents}
+              style={$style}
+              range={$dateRange}
+              timeRange={$timeRange}
+              displayConfig={$eventDisplay}
+              oneditEvent={handleEditEvent}
+            />
+          {:else if $viewType === 'timetable'}
+            <TimetableView
+              matrix={$timetableMatrix}
+              style={$style}
+              config={$timetableConfig}
+              displayConfig={$timetableEventDisplay}
+              oneditCourse={handleEditCourse}
+              onclickCell={handleClickCell}
+            />
+          {:else}
+            <ListView
+              events={$visibleEvents}
+              style={$style}
+              range={$dateRange}
+              displayConfig={$eventDisplay}
+              oneditEvent={handleEditEvent}
+            />
+          {/if}
+        </CalendarFrame>
       </div>
     </CanvasViewport>
   </main>
@@ -236,6 +234,7 @@
 
 <EventEditModal
   event={editingEvent}
+  sameTitleCount={sameTitleIds.size}
   onclose={() => {
     editingEvent = null;
     editingCourse = null;

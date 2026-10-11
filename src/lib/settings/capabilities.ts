@@ -4,6 +4,7 @@ import type { ViewType } from '$lib/types';
 // in the Design tab and apply to every view, so they are not listed here.
 // Order in each array is the render order.
 export type LayoutModule =
+  | 'annotations'
   | 'dateRange'
   | 'timeRange'
   | 'timetableConfig'
@@ -11,8 +12,8 @@ export type LayoutModule =
   | 'timetableEventDisplay';
 
 export const LAYOUT_MODULES: Record<ViewType, ReadonlyArray<LayoutModule>> = {
-  grid:      ['dateRange', 'eventDisplay'],
-  timeline:  ['dateRange', 'timeRange', 'eventDisplay'],
-  list:      ['dateRange', 'eventDisplay'],
-  timetable: ['timetableConfig', 'timetableEventDisplay'],
+  grid:      ['annotations', 'dateRange', 'eventDisplay'],
+  timeline:  ['annotations', 'dateRange', 'timeRange', 'eventDisplay'],
+  list:      ['annotations', 'dateRange', 'eventDisplay'],
+  timetable: ['annotations', 'timetableConfig', 'timetableEventDisplay'],
 };

@@ -2,6 +2,7 @@
   import type { CalendarStyle } from '$lib/types';
   import { getWeekdayLabel } from '$lib/calendar/utils';
   import {
+    courseColorSource,
     formatPeriodTime,
     type CellOverview,
     type Course,
@@ -25,7 +26,7 @@
   >
     <div
       class="w-3 h-3 rounded-full shrink-0"
-      style="background-color: {course.sourceEvents[0]?.color || style.eventDefaultColor};"
+      style="background-color: {courseColorSource(course).color || style.eventDefaultColor};"
     ></div>
     <div class="min-w-0 flex-1">
       <div class="text-sm font-medium whitespace-pre-wrap break-words">{course.title}</div>

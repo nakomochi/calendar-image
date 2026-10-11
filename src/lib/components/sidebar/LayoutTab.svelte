@@ -2,6 +2,7 @@
   import type { Component } from 'svelte';
   import { viewType } from '$lib/stores';
   import { LAYOUT_MODULES, type LayoutModule } from '$lib/settings/capabilities';
+  import AnnotationsSection from './AnnotationsSection.svelte';
   import DateRangeSection from './DateRangeSection.svelte';
   import TimeRangeSection from './TimeRangeSection.svelte';
   import TimetableConfigSection from './TimetableConfigSection.svelte';
@@ -9,6 +10,7 @@
   import TimetableEventDisplaySection from './TimetableEventDisplaySection.svelte';
 
   const SECTION_COMPONENT: Record<LayoutModule, Component> = {
+    annotations: AnnotationsSection,
     dateRange: DateRangeSection,
     timeRange: TimeRangeSection,
     timetableConfig: TimetableConfigSection,

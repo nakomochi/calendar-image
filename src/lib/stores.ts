@@ -9,6 +9,7 @@ import type {
   EventDisplayConfig,
   TimetableConfig,
   SidebarTab,
+  CalendarAnnotations,
 } from './types';
 import {
   DEFAULT_STYLE,
@@ -17,8 +18,17 @@ import {
   DEFAULT_TIME_RANGE,
   DEFAULT_EVENT_DISPLAY,
   DEFAULT_TIMETABLE_DISPLAY,
+  DEFAULT_ANNOTATIONS,
 } from './types';
-import { currentOrNextTerm, splitTermKey } from './calendar/timetable';
+import {
+  buildTimetable,
+  currentOrNextTerm,
+  filterEventsByTerm,
+  joinTermKey,
+  splitTermKey,
+  visibleCourseColorSources,
+} from './calendar/timetable';
+import { buildLegend, usedColors } from './calendar/legend';
 import { persisted, isPlainObject } from './persist';
 
 const VIEW_TYPES: ReadonlyArray<ViewType> = ['grid', 'timeline', 'list', 'timetable'];
@@ -50,8 +60,9 @@ function validateEventDisplay(_initial: EventDisplayConfig, saved: unknown): Eve
   return saved as unknown as EventDisplayConfig;
 }
 
-// Persisted user preferences (localStorage). Event data, date range, timetable
-// term and the ICS URL are intentionally session-only.
+// Persisted user preferences (localStorage). Event data, annotations (title,
+// legend labels, ...), date range, timetable term and the ICS URL are
+// intentionally session-only.
 export const style = persisted<CalendarStyle>('style', { ...DEFAULT_STYLE });
 export const viewTypeByMode = persisted<ViewTypeByMode>(
   'viewTypeByMode',
@@ -73,6 +84,7 @@ export const timetableEventDisplay = persisted<EventDisplayConfig>(
 
 export const events = writable<CalendarEvent[]>([]);
 export const dateRange = writable<DateRange>({ ...DEFAULT_DATE_RANGE });
+export const annotations = writable<CalendarAnnotations>(structuredClone(DEFAULT_ANNOTATIONS));
 
 export const visibleEvents = derived(events, ($events) =>
   $events.filter((e) => e.visible)
@@ -114,3 +126,29 @@ function buildDefaultTimetableConfig(): TimetableConfig {
 }
 
 export const timetableConfig = writable<TimetableConfig>(buildDefaultTimetableConfig());
+
+// Built from all events (visible + hidden) of the selected term so hidden courses
+// can still be listed and restored; consumers filter visibility themselves.
+export const timetableMatrix = derived([events, timetableConfig], ([$events, $config]) =>
+  buildTimetable(
+    filterEventsByTerm($events, {
+      year: $config.termYear,
+      key: joinTermKey($config.termSemester, $config.termPart),
+    }),
+  ),
+);
+
+// Colors shown in the active view, in order of first use. Grid/timeline/list use
+// every visible event rather than replicating each view's range filtering.
+export const legendColors = derived(
+  [viewType, visibleEvents, timetableMatrix, style],
+  ([$viewType, $visibleEvents, $matrix, $style]) =>
+    usedColors(
+      $viewType === 'timetable' ? visibleCourseColorSources($matrix) : $visibleEvents,
+      $style.eventDefaultColor,
+    ),
+);
+
+export const legendItems = derived([annotations, legendColors], ([$annotations, $colors]) =>
+  $annotations.showLegend ? buildLegend($colors, $annotations.legendLabels) : [],
+);

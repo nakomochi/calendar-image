@@ -129,6 +129,7 @@ function addText(slide: Slide, t: SceneText): void {
     lineSpacing: pt(t.lineHeight),
     fontFace: fontFace(t),
     fontSize: pt(t.fontSize),
+    charSpacing: t.letterSpacing ? pt(t.letterSpacing) : undefined,
     ...color(t.color),
     bold: t.fontWeight >= 600,
     italic: t.italic,

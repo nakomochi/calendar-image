@@ -266,6 +266,20 @@ export function listTermYears(events: CalendarEvent[]): number[] {
   return [...years].sort((a, b) => b - a);
 }
 
+// A course is shown unless every one of its source events is hidden.
+export function isCourseVisible(course: Course): boolean {
+  return course.sourceEvents.some((e) => e.visible);
+}
+
+// The event whose color the timetable paints a course with.
+export function courseColorSource(course: Course): CalendarEvent {
+  return course.sourceEvents[0] ?? course.latestEvent;
+}
+
+export function visibleCourseColorSources(matrix: TimetableMatrix): CalendarEvent[] {
+  return [...matrix.values()].flat().filter(isCourseVisible).map(courseColorSource);
+}
+
 export interface CellOverview {
   weekday: TimetableWeekday;
   period: Period;
@@ -285,8 +299,8 @@ export function buildCellOverview(
   const visibleCourses: Course[] = [];
   const hiddenCourses: Course[] = [];
   for (const c of courses) {
-    if (c.sourceEvents.every((e) => !e.visible)) hiddenCourses.push(c);
-    else visibleCourses.push(c);
+    if (isCourseVisible(c)) visibleCourses.push(c);
+    else hiddenCourses.push(c);
   }
   return { weekday, period, visibleCourses, hiddenCourses };
 }

@@ -76,6 +76,30 @@ export const DEFAULT_TIME_RANGE: TimeRange = {
   endTime: '22:00',
 };
 
+// Text drawn around the calendar. Content (like events), so it is not persisted.
+export interface CalendarAnnotations {
+  subtitle: string; // small line above the title, e.g. organization name
+  title: string;
+  note: string; // footer line below the calendar
+  titleSize: number; // px
+  showLegend: boolean;
+  legendLabels: Record<string, string>; // lowercase '#rrggbb' -> label
+}
+
+export const DEFAULT_ANNOTATIONS: CalendarAnnotations = {
+  subtitle: '',
+  title: '',
+  note: '',
+  titleSize: 28,
+  showLegend: false,
+  legendLabels: {},
+};
+
+export interface LegendItem {
+  color: string;
+  label: string;
+}
+
 export type SidebarTab = 'data' | 'layout' | 'design';
 
 export type ExportFormat = 'png' | 'jpg' | 'svg' | 'pptx' | 'html';

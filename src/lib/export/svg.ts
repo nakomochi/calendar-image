@@ -116,6 +116,7 @@ function textToSvg(t: SceneText): string {
     `font-size="${num(t.fontSize)}"`,
     t.fontWeight !== 400 ? `font-weight="${t.fontWeight}"` : '',
     t.italic ? 'font-style="italic"' : '',
+    t.letterSpacing ? `letter-spacing="${num(t.letterSpacing)}"` : '',
     fillAttrs(t.color),
     anchor !== 'start' ? `text-anchor="${anchor}"` : '',
   ].filter(Boolean).join(' ');

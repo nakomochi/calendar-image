@@ -46,8 +46,9 @@
   });
 </script>
 
+<!-- Scrollable in the preview, but the scrollbar is hidden so it never shows up in exports. -->
 <div
-  class="w-full h-full overflow-y-auto p-4"
+  class="w-full h-full overflow-y-auto p-4 [scrollbar-width:none]"
   style="background-color: {style.bgColor}; color: {style.textColor}; font-family: {style.fontFamily}; border-radius: {style.borderRadius}px;"
 >
   {#if grouped.length === 0}

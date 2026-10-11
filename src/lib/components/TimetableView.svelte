@@ -5,7 +5,9 @@
     PERIODS,
     TIMETABLE_WEEKDAYS,
     cellKey,
+    courseColorSource,
     formatPeriodTime,
+    isCourseVisible,
     type Course,
     type Period,
     type TimetableMatrix,
@@ -34,7 +36,7 @@
   let visibleMatrix = $derived.by(() => {
     const result = new Map<string, Course[]>();
     for (const [key, courses] of matrix) {
-      const visible = courses.filter((c) => c.sourceEvents.some((e) => e.visible));
+      const visible = courses.filter(isCourseVisible);
       if (visible.length > 0) result.set(key, visible);
     }
     return result;
@@ -95,7 +97,7 @@
           onclick={() => onclickCell?.(wd, p)}
         >
           {#each courses as course}
-            {@const courseColor = course.sourceEvents[0]?.color || style.eventDefaultColor}
+            {@const courseColor = courseColorSource(course).color || style.eventDefaultColor}
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
               class="flex-1 flex flex-col items-center justify-center text-center px-1.5 py-1 overflow-hidden"

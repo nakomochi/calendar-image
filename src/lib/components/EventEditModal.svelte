@@ -1,20 +1,33 @@
+<script lang="ts" module>
+  export interface EventSaveOptions {
+    // Also apply title and color to the other events sharing the original title.
+    applyToSameTitle: boolean;
+  }
+</script>
+
 <script lang="ts">
   import type { CalendarEvent } from '$lib/types';
   import { events } from '$lib/stores';
 
   interface Props {
     event: CalendarEvent | null;
+    // Events sharing the edited event's original title (itself included); the
+    // bulk option is offered only when > 1.
+    sameTitleCount?: number;
     onclose: () => void;
-    onsave: (event: CalendarEvent) => void;
+    onsave: (event: CalendarEvent, options: EventSaveOptions) => void;
     ontoggleVisibility: (id: string) => void;
   }
 
-  let { event, onclose, onsave, ontoggleVisibility }: Props = $props();
+  let { event, sameTitleCount = 0, onclose, onsave, ontoggleVisibility }: Props = $props();
 
   let editTitle = $state('');
   let editDescription = $state('');
   let editLocation = $state('');
   let editColor = $state('');
+  let applyToSameTitle = $state(true);
+
+  let canApplyToSameTitle = $derived(sameTitleCount > 1);
 
   let usedColors = $derived(
     [...new Set($events.map((e) => e.color).filter((c) => c && c !== ''))]
@@ -26,18 +39,22 @@
       editDescription = event.description;
       editLocation = event.location;
       editColor = event.color || '#3b82f6';
+      applyToSameTitle = true;
     }
   });
 
   function handleSave() {
     if (!event) return;
-    onsave({
-      ...event,
-      title: editTitle,
-      description: editDescription,
-      location: editLocation,
-      color: editColor,
-    });
+    onsave(
+      {
+        ...event,
+        title: editTitle,
+        description: editDescription,
+        location: editLocation,
+        color: editColor,
+      },
+      { applyToSameTitle: canApplyToSameTitle && applyToSameTitle },
+    );
     onclose();
   }
 </script>
@@ -79,6 +96,16 @@
             {/each}
           </div>
         </div>
+
+        {#if canApplyToSameTitle}
+          <label class="flex items-start gap-2 cursor-pointer pt-1">
+            <input type="checkbox" class="checkbox checkbox-sm mt-0.5" bind:checked={applyToSameTitle} />
+            <span class="text-sm">
+              同じ名前の予定（{sameTitleCount} 件）にもまとめて反映
+              <span class="block text-xs text-base-content/60">タイトルと色が対象です</span>
+            </span>
+          </label>
+        {/if}
       </div>
 
       <div class="flex justify-between mt-6">
