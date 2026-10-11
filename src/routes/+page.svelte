@@ -21,7 +21,7 @@
     },
     {
       title: '書き出す',
-      body: 'PNG・JPG・SVG・PowerPoint・HTML。',
+      body: 'PNG・JPG・PPTX・SVG・HTML。',
     },
   ];
 

@@ -22,7 +22,7 @@
     { format: 'png', label: 'PNG', hint: '画像・高画質' },
     { format: 'jpg', label: 'JPG', hint: '画像・軽量' },
     { format: 'svg', label: 'SVG', hint: 'ベクター (Figma・Illustrator)' },
-    { format: 'pptx', label: 'PowerPoint', hint: '編集できるスライド' },
+    { format: 'pptx', label: 'PPTX', hint: 'PowerPoint・Google スライド' },
     { format: 'html', label: 'HTML', hint: 'Web ページ' },
   ];
 
