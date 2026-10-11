@@ -9,9 +9,19 @@ interface ProxyRequestBody {
   strict?: unknown;
 }
 
+function originHost(origin: string): string | null {
+  try {
+    return new URL(origin).host;
+  } catch {
+    return null;
+  }
+}
+
 export const POST: RequestHandler = async ({ request, url }) => {
+  // Compare hosts only: behind a TLS-terminating proxy the server sees http
+  // while the browser's Origin is https.
   const origin = request.headers.get('origin');
-  if (origin && origin !== url.origin) {
+  if (origin && originHost(origin) !== url.host) {
     return new Response('Forbidden origin', { status: 403 });
   }
 
