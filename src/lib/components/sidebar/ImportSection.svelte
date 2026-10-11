@@ -118,6 +118,11 @@
       {loading ? '...' : '読込'}
     </button>
   </form>
+  {#if $utokyoMode}
+    <p class="text-[10px] text-gray-500 leading-relaxed">
+      URL は UTAS › 休講・スケジュール › カレンダー連携 › 授業・定期試験カレンダー から取得できます。
+    </p>
+  {/if}
   <label
     for={FILE_INPUT_ID}
     class="block border-2 border-dashed rounded-lg p-4 text-center text-xs text-gray-400 cursor-pointer hover:border-primary focus-within:border-primary"
@@ -140,6 +145,6 @@
     <div class="text-success text-xs">{loadedCount} 件の予定を読み込みました</div>
   {/if}
   <p class="text-[10px] text-gray-400 leading-relaxed">
-    URL から読み込む場合は Cloudflare Workers で中継しますが、URL や予定の内容は保存・記録しません。URL はリクエスト本文で送るため、アクセスログやキャッシュにも残りません。ファイルを選んだ場合、データは外部に送信されません。 <a href="/#privacy" class="link" target="_blank" rel="noopener">詳細</a>
+    URL は中継サーバーを経由しますが、URL や予定は保存・記録しません。ファイルは外部に送信しません。 <a href="/#privacy" class="link" target="_blank" rel="noopener">詳細</a>
   </p>
 </div>

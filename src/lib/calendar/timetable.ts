@@ -65,8 +65,16 @@ export function overlapRatioWithPeriod(
   return periodLen > 0 ? overlap / periodLen : 0;
 }
 
+// UTAS replaces a cancelled session with "[休]<title>" and adds makeup
+// sessions as "[補]<title>"; both belong to the regular course.
+const SESSION_MARKER = /^\s*\[(休|補)\]\s*/;
+
+function hasSessionMarker(title: string): boolean {
+  return SESSION_MARKER.test(title);
+}
+
 function normalizeTitle(title: string): string {
-  return title.trim().replace(/\s+/g, ' ');
+  return title.replace(SESSION_MARKER, '').trim().replace(/\s+/g, ' ');
 }
 
 function isTimetableWeekday(n: number): n is TimetableWeekday {
@@ -124,16 +132,23 @@ export function buildTimetable(
       for (const [groupKey, src] of titleGroups) {
         if (src.length < COURSE_MIN_COUNT || src.length / topCount < COURSE_MIN_RATIO) continue;
         let earliestMs = Infinity;
+        // Prefer a regular session as the representative so the cell shows
+        // the plain course title rather than a [休]/[補] one.
+        const regular = src.filter((e) => !hasSessionMarker(e.title));
+        const candidates = regular.length > 0 ? regular : src;
         let latestMs = -Infinity;
-        let latestEvent = src[0];
-        const locationCounts = new Map<string, number>();
-        for (const e of src) {
+        let latestEvent = candidates[0];
+        for (const e of candidates) {
           const ms = new Date(e.start).getTime();
-          if (ms < earliestMs) earliestMs = ms;
           if (ms > latestMs) {
             latestMs = ms;
             latestEvent = e;
           }
+        }
+        const locationCounts = new Map<string, number>();
+        for (const e of src) {
+          const ms = new Date(e.start).getTime();
+          if (ms < earliestMs) earliestMs = ms;
           const loc = e.location.trim();
           if (loc) locationCounts.set(loc, (locationCounts.get(loc) ?? 0) + 1);
         }
@@ -148,7 +163,7 @@ export function buildTimetable(
         const isoDay = new Date(earliestMs).toISOString().slice(0, 10);
         courses.push({
           id: `${wd}-${p.index}-${groupKey}-${isoDay}`,
-          title: latestEvent.title,
+          title: hasSessionMarker(latestEvent.title) ? groupKey : latestEvent.title,
           location,
           weekday: wd,
           period: p,
