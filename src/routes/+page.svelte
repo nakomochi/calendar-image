@@ -57,10 +57,10 @@
     <section class="mx-auto grid max-w-5xl items-center gap-12 px-5 py-16 md:grid-cols-2 md:py-24">
       <div class="space-y-6">
         <h1 class="text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-          いつものカレンダーを、<br />そのまま画像に。
+          使っているカレンダーから、<br />見せるカレンダーへ。
         </h1>
         <p class="text-base leading-relaxed text-base-content/70 sm:text-lg">
-          Google カレンダーなどをつなぐだけ。PNG のほか、あとから編集できる PowerPoint・SVG にも書き出せます。
+          Google カレンダーなどの予定をそのまま読み込んで、すぐに画像やファイルに。あとから手直しもできます。
         </p>
         <div class="flex flex-wrap gap-3">
           <a href="/editor" class="btn btn-primary">エディタを開く</a>
