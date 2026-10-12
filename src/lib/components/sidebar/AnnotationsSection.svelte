@@ -1,9 +1,17 @@
 <script lang="ts">
-  import { annotations, legendColors } from '$lib/stores';
+  import { annotations, explainMode, legendColors, viewType } from '$lib/stores';
+  import { explainModes } from '$lib/settings/capabilities';
+  import type { ExplainMode } from '$lib/types';
+
+  const EXPLAIN_LABELS: Record<ExplainMode, string> = {
+    none: 'なし',
+    legend: '凡例',
+    list: '一覧',
+  };
 </script>
 
 <div class="space-y-2">
-  <h3 class="font-bold text-sm">タイトル・凡例</h3>
+  <h3 class="font-bold text-sm">タイトル・説明</h3>
   <label class="flex items-center justify-between text-xs gap-2">
     <span class="shrink-0">小見出し</span>
     <input
@@ -36,11 +44,20 @@
     <input type="number" class="input input-bordered input-xs w-20" min="12" max="96" bind:value={$annotations.titleSize} />
   </label>
 
-  <label class="flex items-center gap-2 text-xs">
-    <input type="checkbox" class="checkbox checkbox-xs" bind:checked={$annotations.showLegend} />
-    <span>凡例を表示</span>
+  <!-- Shows the mode in effect for this view, so a 'list' left over from another view reads as なし. -->
+  <label class="flex items-center justify-between text-xs gap-2">
+    <span class="shrink-0">予定の説明</span>
+    <select
+      class="select select-bordered select-xs w-44"
+      value={$explainMode}
+      onchange={(e) => ($annotations.explain = e.currentTarget.value as ExplainMode)}
+    >
+      {#each explainModes($viewType) as mode (mode)}
+        <option value={mode}>{EXPLAIN_LABELS[mode]}</option>
+      {/each}
+    </select>
   </label>
-  {#if $annotations.showLegend}
+  {#if $explainMode === 'legend'}
     {#if $legendColors.length === 0}
       <p class="text-xs text-base-content/60">予定を読み込むと色が表示されます</p>
     {:else}
@@ -60,5 +77,9 @@
       </div>
       <p class="text-xs text-base-content/60">名前を入れた色だけが凡例に表示されます</p>
     {/if}
+  {:else if $explainMode === 'list'}
+    <p class="text-xs text-base-content/60">
+      同じ名前の予定をまとめて、日付・時間・場所を自動で並べます。名前や色は予定の編集から変えられます。
+    </p>
   {/if}
 </div>

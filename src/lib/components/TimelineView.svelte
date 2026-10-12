@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { getWeekdayLabel, getEventsForDay, isSameDay, layoutEvents, isDayInRange, getTimeRangeHours, getRangeDays, getWeekDays, hasValidRange, buildEventRows, minutesOfDay } from '$lib/calendar/utils';
-  import { chipCss, headerCss, weekdayAccent, todayCellTint } from '$lib/calendar/styleHelpers';
+  import { getWeekdayLabel, getEventsForDay, isSameDay, layoutEvents, getTimeRangeHours, timelineViewDays, firstShownIndex, showsEvents, isFaded, buildEventRows, minutesOfDay } from '$lib/calendar/utils';
+  import { chipCss, headerCss, weekdayAccent, todayCellTint, GRAYOUT_BG } from '$lib/calendar/styleHelpers';
   import DateLabel from './DateLabel.svelte';
   import type { CalendarEvent, CalendarStyle, DateRange, EventDisplayConfig, TimeRange } from '$lib/types';
 
@@ -15,11 +15,8 @@
 
   let { events, style, range, timeRange, displayConfig, oneditEvent }: Props = $props();
 
-  let days = $derived(
-    hasValidRange(range)
-      ? getRangeDays(range)
-      : getWeekDays(new Date())
-  );
+  let days = $derived(timelineViewDays(range));
+  let firstShown = $derived(firstShownIndex(days));
   let today = new Date();
 
   let timeBounds = $derived(getTimeRangeHours(timeRange));
@@ -54,20 +51,20 @@
   <!-- Header -->
   <div class="flex shrink-0">
     <div class="w-[60px] shrink-0 p-1" style="{headerCss(style)} border-top-left-radius: {style.borderRadius}px;"></div>
-    {#each days as day, i}
-      {@const inRange = isDayInRange(day, range)}
-      {@const outOfRange = hasValidRange(range) && !inRange}
+    {#each days as { date: day, state }, i}
       {@const isToday = style.highlightToday && isSameDay(day, today)}
       {@const accent = weekdayAccent(day.getDay(), style)}
       <div
         class="flex-1 text-center text-xs font-bold py-2"
         style="{headerCss(style)}
           {accent ? `color: ${accent};` : ''}
-          opacity: {outOfRange ? 0.3 : 1};
+          opacity: {isFaded(state) ? 0.3 : 1};
           {i === days.length - 1 ? `border-top-right-radius: ${style.borderRadius}px;` : ''}"
       >
-        <div>{getWeekdayLabel(day.getDay(), style.weekdayFormat)}</div>
-        <DateLabel {day} isFirstCell={i === 0} {isToday} {style} accent={accent} />
+        {#if state !== 'hide'}
+          <div>{getWeekdayLabel(day.getDay(), style.weekdayFormat)}</div>
+          <DateLabel {day} isFirstCell={i === firstShown} {isToday} {style} accent={accent} />
+        {/if}
       </div>
     {/each}
   </div>
@@ -76,15 +73,12 @@
   {#if events.some((e) => e.allDay)}
     <div class="flex shrink-0 border-b" style="border-color: {style.gridLineColor};">
       <div class="w-[60px] shrink-0 text-[10px] text-gray-400 p-1 flex items-center">終日</div>
-      {#each days as day}
-        {@const inRange = isDayInRange(day, range)}
-        {@const outOfRange = hasValidRange(range) && !inRange}
-        {@const showGrayout = outOfRange && range.grayout}
-        {@const allDayEvents = outOfRange && !showGrayout ? [] : getEventsForDay(events, day).filter((e) => e.allDay)}
+      {#each days as { date: day, state }}
+        {@const allDayEvents = showsEvents(state) ? getEventsForDay(events, day).filter((e) => e.allDay) : []}
         <div
           class="flex-1 p-0.5 flex min-h-[28px]"
           style="flex-direction: column; align-items: {style.eventAlign === 'center' ? 'center' : 'flex-start'}; gap: 2px;
-            opacity: {outOfRange ? 0.3 : 1}; background-color: {showGrayout ? '#f3f4f6' : 'transparent'};"
+            opacity: {isFaded(state) ? 0.3 : 1}; background-color: {state === 'gray' ? GRAYOUT_BG : 'transparent'};"
         >
           {#each allDayEvents as ev}
             <button
@@ -121,19 +115,16 @@
     </div>
 
     <!-- Day columns -->
-    {#each days as day}
-      {@const inRange = isDayInRange(day, range)}
-      {@const outOfRange = hasValidRange(range) && !inRange}
-      {@const showGrayout = outOfRange && range.grayout}
+    {#each days as { date: day, state }}
       {@const isToday = style.highlightToday && isSameDay(day, today)}
-      {@const timedEvents = outOfRange && !showGrayout ? [] : getEventsForDay(events, day).filter((e) => !e.allDay)}
+      {@const timedEvents = showsEvents(state) ? getEventsForDay(events, day).filter((e) => !e.allDay) : []}
       {@const layouted = layoutEvents(timedEvents)}
-      {@const showTodayCol = isToday && todayCellTint(style)}
+      {@const showTodayCol = isToday && todayCellTint(style) && state !== 'hide'}
       <div
         class="flex-1 relative border-l"
         style="height: {totalHeight}px; border-color: {style.gridLineColor};
-          background-color: {showGrayout ? '#f3f4f6' : showTodayCol ? style.todayBgColor : 'transparent'};
-          opacity: {outOfRange ? 0.3 : 1};"
+          background-color: {state === 'gray' ? GRAYOUT_BG : showTodayCol ? style.todayBgColor : 'transparent'};
+          opacity: {isFaded(state) ? 0.3 : 1};"
       >
         <!-- Hour lines -->
         {#each visibleHours as hour, idx}

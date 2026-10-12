@@ -1,4 +1,9 @@
-import type { ViewType } from '$lib/types';
+import type { ExplainMode, ViewType } from '$lib/types';
+
+// The summary list describes dated events, which the timetable doesn't show.
+export function explainModes(view: ViewType): ReadonlyArray<ExplainMode> {
+  return view === 'timetable' ? ['none', 'legend'] : ['none', 'legend', 'list'];
+}
 
 // Sections shown in the sidebar's Layout tab for each view. Design settings live
 // in the Design tab and apply to every view, so they are not listed here.

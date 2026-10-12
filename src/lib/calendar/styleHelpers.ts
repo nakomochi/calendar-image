@@ -1,12 +1,28 @@
 import type { CalendarStyle } from '$lib/types';
+import { normalizeColor } from './legend';
+
+// Background of out-of-range days when DateRange.outside is 'gray'.
+export const GRAYOUT_BG = '#f3f4f6';
+
+function parseHex6(hex: string): [number, number, number] | null {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return null;
+  return [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)) as [number, number, number];
+}
 
 export function withAlpha(hex: string, alpha: number): string {
-  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
-  if (!m) return hex;
-  const r = parseInt(m[1].slice(0, 2), 16);
-  const g = parseInt(m[1].slice(2, 4), 16);
-  const b = parseInt(m[1].slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  const rgb = parseHex6(hex);
+  if (!rgb) return hex;
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+}
+
+// Text color for content drawn on a solid `color` fill: white unless the fill
+// is light (YIQ brightness), so mid-tone accents like orange keep white text.
+export function contrastText(color: string): string {
+  const rgb = parseHex6(normalizeColor(color));
+  if (!rgb) return '#ffffff';
+  const yiq = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+  return yiq >= 180 ? '#1f2937' : '#ffffff';
 }
 
 // CSS for an event chip (fill / outline / left-bar). Preserves per-event color.

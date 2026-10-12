@@ -1,4 +1,4 @@
-import type { CalendarEvent, DateRange, EventDisplayConfig, EventField, TimeRange, WeekdayFormat } from '../types';
+import type { CalendarEvent, DateRange, EventDisplayConfig, EventField, OutsideDays, TimeRange, ViewType, WeekdayFormat } from '../types';
 
 export function getMonthDays(year: number, month: number): Date[] {
   const first = new Date(year, month, 1);
@@ -45,14 +45,14 @@ export function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
+export function eventOnDay(e: CalendarEvent, date: Date): boolean {
+  const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+  return new Date(e.start) < dayEnd && new Date(e.end) > dayStart;
+}
+
 export function getEventsForDay(events: CalendarEvent[], date: Date): CalendarEvent[] {
-  return events.filter((e) => {
-    const start = new Date(e.start);
-    const end = new Date(e.end);
-    const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
-    return start < dayEnd && end > dayStart;
-  });
+  return events.filter((e) => eventOnDay(e, date));
 }
 
 // Ids of events titled `title` (compared trimmed). Untitled events never match.
@@ -177,10 +177,63 @@ export function getRangeGridDays(range: DateRange): Date[] {
   return days;
 }
 
-// Fallback: current month grid when no range is set
-export function getCurrentMonthGrid(): Date[] {
-  const now = new Date();
-  return getMonthDays(now.getFullYear(), now.getMonth());
+// 'in' days are drawn normally; the rest follow DateRange.outside.
+export type DayState = 'in' | OutsideDays;
+
+export interface ViewDay {
+  date: Date;
+  state: DayState;
+}
+
+function rangeDayState(day: Date, range: DateRange): DayState {
+  return !hasValidRange(range) || isDayInRange(day, range) ? 'in' : range.outside;
+}
+
+// Month grid cells: the range padded to whole weeks, else the current month's
+// 6-week grid. Adjacent-month days there only honor 'hide'; 'dim'/'gray' keep
+// them as regular days.
+export function gridViewDays(range: DateRange, now = new Date()): ViewDay[] {
+  if (hasValidRange(range)) {
+    return getRangeGridDays(range).map((date) => ({ date, state: rangeDayState(date, range) }));
+  }
+  const month = now.getMonth();
+  return getMonthDays(now.getFullYear(), month).map((date) => ({
+    date,
+    state: range.outside === 'hide' && date.getMonth() !== month ? 'hide' : 'in',
+  }));
+}
+
+// Timeline columns: the range days, else the current week.
+export function timelineViewDays(range: DateRange, now = new Date()): ViewDay[] {
+  const days = hasValidRange(range) ? getRangeDays(range) : getWeekDays(now);
+  return days.map((date) => ({ date, state: rangeDayState(date, range) }));
+}
+
+// Dimmed and hidden days stay empty; grayed-out days still show their events.
+export function showsEvents(state: DayState): boolean {
+  return state === 'in' || state === 'gray';
+}
+
+export function isFaded(state: DayState): boolean {
+  return state === 'dim' || state === 'gray';
+}
+
+// Index of the first day with a visible date label (it gets the "M/D" label).
+export function firstShownIndex(days: ViewDay[]): number {
+  return days.findIndex((d) => d.state !== 'hide');
+}
+
+// Events a (non-timetable) view actually draws, in input order.
+export function eventsInView(
+  view: Exclude<ViewType, 'timetable'>,
+  events: CalendarEvent[],
+  range: DateRange,
+): CalendarEvent[] {
+  if (view === 'list') return events.filter((e) => eventOverlapsRange(e, range));
+  const days = (view === 'grid' ? gridViewDays(range) : timelineViewDays(range))
+    .filter((d) => showsEvents(d.state))
+    .map((d) => d.date);
+  return events.filter((e) => days.some((day) => eventOnDay(e, day)));
 }
 
 export function getTimeRangeHours(range: TimeRange): { startHour: number; endHour: number } {

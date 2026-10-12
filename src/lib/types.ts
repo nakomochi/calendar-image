@@ -54,10 +54,14 @@ export interface CalendarStyle {
   dateAlign: DateAlign;
 }
 
+// How days outside the displayed span are drawn: out-of-range days when a range
+// is set, adjacent-month days of the current-month grid otherwise ('hide' only).
+export type OutsideDays = 'dim' | 'gray' | 'hide';
+
 export interface DateRange {
   start: string; // 'YYYY-MM-DD'
   end: string;
-  grayout: boolean;
+  outside: OutsideDays;
 }
 
 export interface TimeRange {
@@ -68,7 +72,7 @@ export interface TimeRange {
 export const DEFAULT_DATE_RANGE: DateRange = {
   start: '',
   end: '',
-  grayout: false,
+  outside: 'dim',
 };
 
 export const DEFAULT_TIME_RANGE: TimeRange = {
@@ -76,13 +80,17 @@ export const DEFAULT_TIME_RANGE: TimeRange = {
   endTime: '22:00',
 };
 
+// 'legend' — labeled color swatches in the header
+// 'list'   — per-title summary (dates, time, place) between the calendar and the note
+export type ExplainMode = 'none' | 'legend' | 'list';
+
 // Text drawn around the calendar. Content (like events), so it is not persisted.
 export interface CalendarAnnotations {
   subtitle: string; // small line above the title, e.g. organization name
   title: string;
   note: string; // footer line below the calendar
   titleSize: number; // px
-  showLegend: boolean;
+  explain: ExplainMode;
   legendLabels: Record<string, string>; // lowercase '#rrggbb' -> label
 }
 
@@ -91,7 +99,7 @@ export const DEFAULT_ANNOTATIONS: CalendarAnnotations = {
   title: '',
   note: '',
   titleSize: 28,
-  showLegend: false,
+  explain: 'none',
   legendLabels: {},
 };
 
@@ -181,10 +189,14 @@ export interface RowConfig {
   bold?: boolean;
 }
 
+// Grid view only: 'names' draws event chips in the cells, 'dates' colors the date numbers.
+export type GridMarks = 'names' | 'dates';
+
 export interface EventDisplayConfig {
   rows: RowConfig[];
   hidden: EventField[];
   allDayMode: 'label' | 'omit';
+  gridMarks: GridMarks;
 }
 
 export const DEFAULT_EVENT_DISPLAY: EventDisplayConfig = {
@@ -203,6 +215,7 @@ export const DEFAULT_EVENT_DISPLAY: EventDisplayConfig = {
   ],
   hidden: ['endTime', 'description', 'allDayLabel'],
   allDayMode: 'label',
+  gridMarks: 'names',
 };
 
 // Period times are already in the row header; allDayMode is unused (courses are never all-day).
@@ -213,6 +226,7 @@ export const DEFAULT_TIMETABLE_DISPLAY: EventDisplayConfig = {
   ],
   hidden: ['startTime', 'endTime', 'description'],
   allDayMode: 'omit',
+  gridMarks: 'names',
 };
 
 export const EVENT_FIELD_LABELS: Record<EventField, string> = {

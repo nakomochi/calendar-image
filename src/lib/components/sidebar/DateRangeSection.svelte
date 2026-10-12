@@ -12,8 +12,12 @@
     <span>終了日</span>
     <input type="date" class="input input-bordered input-xs w-36" bind:value={$dateRange.end} />
   </label>
-  <label class="flex items-center gap-2 text-xs">
-    <input type="checkbox" class="checkbox checkbox-xs" bind:checked={$dateRange.grayout} />
-    <span>範囲外をグレーアウト表示</span>
+  <label class="flex items-center justify-between text-xs gap-2">
+    <span class="shrink-0">範囲外の日</span>
+    <select class="select select-bordered select-xs w-36" bind:value={$dateRange.outside}>
+      <option value="dim">薄く表示</option>
+      <option value="gray">グレーで表示</option>
+      <option value="hide">表示しない</option>
+    </select>
   </label>
 </div>

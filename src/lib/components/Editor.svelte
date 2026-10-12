@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { get } from 'svelte/store';
-  import { events, style, viewType, viewTypeByMode, exportSettings, dateRange, timeRange, eventDisplay, timetableEventDisplay, utokyoMode as utokyoModeStore, timetableConfig, timetableMatrix, annotations, legendItems, patchEvents, openSidebarTab, type EditorMode } from '$lib/stores';
+  import { events, style, viewType, viewTypeByMode, exportSettings, dateRange, timeRange, eventDisplay, timetableEventDisplay, utokyoMode as utokyoModeStore, timetableConfig, timetableMatrix, annotations, legendItems, summaryItems, patchEvents, openSidebarTab, type EditorMode } from '$lib/stores';
   import { visibleEvents } from '$lib/stores';
   import { desktop } from '$lib/media.svelte';
   import { eventIdsWithTitle, getEventsForDay } from '$lib/calendar/utils';
@@ -169,7 +169,7 @@
         bind:this={calendarEl}
         style="width: {$exportSettings.width}px; height: {$exportSettings.height}px;"
       >
-        <CalendarFrame style={$style} annotations={$annotations} legend={$legendItems}>
+        <CalendarFrame style={$style} annotations={$annotations} legend={$legendItems} summary={$summaryItems}>
           {#if $viewType === 'grid'}
             <GridView
               events={$visibleEvents}

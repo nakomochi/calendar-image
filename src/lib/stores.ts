@@ -29,6 +29,9 @@ import {
   visibleCourseColorSources,
 } from './calendar/timetable';
 import { buildLegend, usedColors } from './calendar/legend';
+import { buildSummary } from './calendar/summary';
+import { eventsInView } from './calendar/utils';
+import { explainModes } from './settings/capabilities';
 import { persisted, isPlainObject } from './persist';
 
 const VIEW_TYPES: ReadonlyArray<ViewType> = ['grid', 'timeline', 'list', 'timetable'];
@@ -52,12 +55,16 @@ function validateViewTypeByMode(initial: ViewTypeByMode, saved: unknown): ViewTy
 
 // Rows/hidden are replaced wholesale (no shallow merge) since a partial config
 // would be meaningless; anything malformed falls back to the default.
-function validateEventDisplay(_initial: EventDisplayConfig, saved: unknown): EventDisplayConfig | null {
+// gridMarks was added later, so configs saved before it fall back to the default.
+function validateEventDisplay(initial: EventDisplayConfig, saved: unknown): EventDisplayConfig | null {
   if (!isPlainObject(saved)) return null;
-  const { rows, hidden, allDayMode } = saved;
+  const { rows, hidden, allDayMode, gridMarks } = saved;
   if (!Array.isArray(rows) || !Array.isArray(hidden)) return null;
   if (allDayMode !== 'label' && allDayMode !== 'omit') return null;
-  return saved as unknown as EventDisplayConfig;
+  return {
+    ...(saved as unknown as EventDisplayConfig),
+    gridMarks: gridMarks === 'names' || gridMarks === 'dates' ? gridMarks : initial.gridMarks,
+  };
 }
 
 // Persisted user preferences (localStorage). Event data, annotations (title,
@@ -149,6 +156,24 @@ export const legendColors = derived(
     ),
 );
 
-export const legendItems = derived([annotations, legendColors], ([$annotations, $colors]) =>
-  $annotations.showLegend ? buildLegend($colors, $annotations.legendLabels) : [],
+// annotations.explain as it applies to the active view (unsupported modes read as 'none').
+export const explainMode = derived([annotations, viewType], ([$annotations, $viewType]) =>
+  explainModes($viewType).includes($annotations.explain) ? $annotations.explain : 'none',
+);
+
+export const legendItems = derived([explainMode, annotations, legendColors], ([$mode, $annotations, $colors]) =>
+  $mode === 'legend' ? buildLegend($colors, $annotations.legendLabels) : [],
+);
+
+// Summary list rows for the events the active view draws (same range/outside-day
+// rules). explainMode is never 'list' for the timetable.
+export const summaryItems = derived(
+  [explainMode, viewType, visibleEvents, dateRange, style],
+  ([$mode, $viewType, $events, $range, $style]) =>
+    $mode === 'list' && $viewType !== 'timetable'
+      ? buildSummary(eventsInView($viewType, $events, $range), {
+          defaultColor: $style.eventDefaultColor,
+          weekdayFormat: $style.weekdayFormat,
+        })
+      : [],
 );
