@@ -7,6 +7,12 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Japanese text breaks only at spaces and <wbr>, never mid-phrase (unless it would overflow). */
+@utility jp-wrap {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
 [class~="overflow-auto"],
 [class~="overflow-scroll"],
 [class~="overflow-y-auto"],

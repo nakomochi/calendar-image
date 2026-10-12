@@ -122,6 +122,10 @@
     <p class="text-[10px] text-gray-500 leading-relaxed">
       URL は UTAS › 休講・スケジュール › カレンダー連携 › 授業・定期試験カレンダー から取得できます。
     </p>
+  {:else}
+    <p class="text-[10px] text-gray-500 leading-relaxed">
+      Google カレンダー: 設定 › (カレンダー名) › カレンダーの統合 › iCal 形式の非公開アドレス
+    </p>
   {/if}
   <label
     for={FILE_INPUT_ID}
