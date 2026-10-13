@@ -263,13 +263,13 @@
 
   <footer class="border-t border-gray-100">
     <div class="mx-auto flex max-w-[1040px] flex-wrap justify-between gap-3 px-5 py-5 text-xs text-gray-400 md:px-6">
-      <p>
-        みせカレ（<a href={REPO_URL} class="hover:text-gray-600">MIT License</a>）
-      </p>
+      <p>みせカレ</p>
       <nav aria-label="フッター" class="flex items-center gap-1.5">
         <a href="/editor" class="hover:text-gray-600">作り始める</a>
         <span aria-hidden="true">・</span>
         <a href="/timetable/utokyo" class="hover:text-gray-600">大学の時間割</a>
+        <span aria-hidden="true">・</span>
+        <a href={REPO_URL} class="hover:text-gray-600">GitHub</a>
       </nav>
     </div>
   </footer>
