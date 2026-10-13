@@ -2,8 +2,8 @@
   import afterImage from '$lib/assets/lp-after-shinkan.png';
 
   // Intrinsic size of the exported image (510x520 canvas at pixelRatio 2).
-  const AFTER_IMAGE_WIDTH = 1020;
-  const AFTER_IMAGE_HEIGHT = 1040;
+  const AFTER_IMAGE_WIDTH = 1080;
+  const AFTER_IMAGE_HEIGHT = 1350;
 
   const BTN =
     'inline-flex items-center justify-center whitespace-nowrap border-[1.5px] font-bold transition-colors';
