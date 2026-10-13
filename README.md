@@ -1,42 +1,37 @@
-# sv
+# みせカレ
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+使っているカレンダーから、見せるカレンダーへ。
 
-## Creating a project
+Google カレンダーなどの予定（ICS）をそのまま読み込んで、告知用のカレンダー画像やファイルを作る Web アプリです。
 
-If you're seeing this, you've probably already done this step. Congrats!
+https://misekare.nakomochi.dev
 
-```sh
-# create a new project
-npx sv create my-app
-```
+## できること
 
-To recreate this project with the same configuration:
+- ICS の URL（Google カレンダー・Outlook・iCloud）または .ics ファイルを読み込む
+- 月間グリッド・タイムライン・リストで表示し、テーマや表示項目を調整する
+- タイトル・注記・凡例・予定の一覧を付ける
+- PNG・JPG・PPTX・SVG・HTML で書き出す
+- 大学の時間割（東京大学）: UTAS の授業カレンダーから曜日×時限の時間割を作る
 
-```sh
-# recreate this project
-npx sv@0.15.1 create --template minimal --types ts --no-install .
-```
+## プライバシー
 
-## Developing
+- .ics ファイルはブラウザ内で処理し、外部に送信しません。
+- URL から読み込む場合は Cloudflare Workers 上の中継サーバーを経由しますが、URL や予定は保存・記録しません。URL は POST の本文で送るため、アクセスログやキャッシュにも残りません。
+- 設定はブラウザ（localStorage）にだけ保存します。予定と URL は保存しません。
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
+## 開発
 
 ```sh
-npm run build
+bun install
+bun run dev      # 開発サーバー
+bun run check    # 型チェック
+bun run build    # ビルド
+bun run deploy   # Cloudflare Workers にデプロイ
 ```
 
-You can preview the production build with `npm run preview`.
+SvelteKit（Svelte 5）+ Tailwind CSS + daisyUI、Cloudflare Workers で動いています。
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## ライセンス
+
+[MIT](./LICENSE)

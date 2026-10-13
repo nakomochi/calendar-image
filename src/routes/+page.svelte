@@ -1,7 +1,7 @@
 <script lang="ts">
   import afterImage from '$lib/assets/lp-after-shinkan.png';
 
-  // Intrinsic size of the exported image (510x520 canvas at pixelRatio 2).
+  // Intrinsic size of the exported image (540x675 canvas at pixelRatio 2).
   const AFTER_IMAGE_WIDTH = 1080;
   const AFTER_IMAGE_HEIGHT = 1350;
 
@@ -51,7 +51,7 @@
 </script>
 
 <svelte:head>
-  <title>Calendar Image — 使っているカレンダーから、見せるカレンダーへ</title>
+  <title>みせカレ — 使っているカレンダーから、見せるカレンダーへ</title>
   <meta
     name="description"
     content="Google カレンダーなどの予定をそのまま読み込んで、カレンダー画像や PowerPoint・SVG・HTML に書き出せます。登録不要。"
@@ -101,7 +101,7 @@
 <div data-theme="light" class="jp-wrap min-h-screen bg-white text-gray-800">
   <header class="sticky top-0 z-40 border-b border-gray-100 bg-white/90 backdrop-blur-md">
     <div class="mx-auto flex max-w-[1040px] items-center justify-between gap-3 px-5 py-3 md:px-6">
-      <a href="/" class="text-[17px] font-extrabold tracking-[-0.01em]">Calendar Image</a>
+      <a href="/" class="text-[17px] font-extrabold tracking-[-0.01em]">みせカレ</a>
       <nav aria-label="ページ内リンク" class="flex items-center gap-1">
         <a href="#timetable" class="hidden px-2.5 py-1.5 text-[13px] text-gray-500 hover:text-gray-800 sm:inline">大学の時間割</a>
         <a href="#privacy" class="hidden px-2.5 py-1.5 text-[13px] text-gray-500 hover:text-gray-800 sm:inline">プライバシー</a>
@@ -263,7 +263,9 @@
 
   <footer class="border-t border-gray-100">
     <div class="mx-auto flex max-w-[1040px] flex-wrap justify-between gap-3 px-5 py-5 text-xs text-gray-400 md:px-6">
-      <p>© Calendar Image</p>
+      <p>
+        みせカレ（<a href={REPO_URL} class="hover:text-gray-600">MIT License</a>）
+      </p>
       <nav aria-label="フッター" class="flex items-center gap-1.5">
         <a href="/editor" class="hover:text-gray-600">作り始める</a>
         <span aria-hidden="true">・</span>

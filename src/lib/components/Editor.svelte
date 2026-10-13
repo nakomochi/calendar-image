@@ -120,7 +120,7 @@
 </script>
 
 <svelte:head>
-  <title>{$utokyoModeStore ? '東大カレンダー' : 'Calendar Image Generator'}</title>
+  <title>{$utokyoModeStore ? '大学の時間割 — みせカレ' : 'みせカレ'}</title>
 </svelte:head>
 
 {#snippet emptyState()}
